@@ -24,7 +24,7 @@ jobs:
     - name: Restore
       run: dotnet restore
 
-    # ⚠️ Pubblica il PROGETTO (csproj), non la SOLUZIONE (sln).
+    # Pubblica il PROGETTO (csproj), non la SOLUZIONE (sln).
     # Sostituisci il path se il tuo progetto non è in questa posizione.
     - name: Publish Blazor WASM
       run: dotnet publish ./BlazorApp_IOS/BlazorApp_IOS.csproj -c Release -o publish
