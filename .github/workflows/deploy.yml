@@ -30,7 +30,7 @@ jobs:
     # Pubblica il PROGETTO (non la .sln) in ./publish
     # StaticWebAssetBasePath=/ios per far funzionare gli asset sotto /ios/
     - name: Publish Blazor WASM
-      run: dotnet publish ./BlazorApp_IOS.csproj -c Release -o publish -p:StaticWebAssetBasePath=/ios --no-build
+      run: dotnet publish ./BlazorApp_IOS.csproj -c Release -o publish  --no-build
 
     # Verifica che l'output contenga index.html
     - name: Verify publish output
