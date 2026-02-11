@@ -1,47 +1,80 @@
-﻿name: Deploy Blazor WASM to GitHub Pages
+﻿name: Deploy Blazor WASM to GitHub Pages (branch gh-pages)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "main" ]     # <� il branch su cui fai push da Visual Studio
+  workflow_dispatch:          # facoltativo: per lanciare manualmente dall�UI
 
-# consente al workflow di scrivere su gh-pages
 permissions:
-  contents: write
+  contents: write             # richiesto da peaceiris per push su gh-pages
+
+# Evita run accodati: se pushi pi� volte, mantiene solo l'ultimo
+concurrency:
+  group: gh-pages
+  cancel-in-progress: true
 
 jobs:
-  build:
+  build-deploy:
     runs-on: ubuntu-latest
 
+    env:
+      PROJECT_PATH: BlazorApp_IOS.csproj          # <� aggiorna se il .csproj ha un nome/percorso diverso
+      OUT_DIR:      build/publish
+      PUBLISH_DIR:  build/publish/wwwroot
+      REPO_SUBDIR:  ios                        # <� sottocartella del sito su Pages
+
     steps:
-    - name: Checkout
-      uses: actions/checkout@v4
+      - name: Checkout
+        uses: actions/checkout@v4
 
-    - name: Setup .NET
-      uses: actions/setup-dotnet@v4
-      with:
-        dotnet-version: '10.x'
+      - name: Setup .NET 10 SDK
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+          # Se stai usando una preview:
+          # dotnet-quality: 'preview'
 
-    - name: Restore
-      run: dotnet restore ./BlazorApp_IOS.csproj
+      # (Opzionale ma consigliato) cache NuGet per velocizzare repeat build
+      - name: NuGet cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.nuget/packages
+          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
+          restore-keys: |
+            nuget-${{ runner.os }}-
 
-    - name: Build (Release)
-      run: dotnet build ./BlazorApp_IOS.csproj -c Release --no-restore
+      - name: Restore
+        run: dotnet restore "${{ env.PROJECT_PATH }}"
 
-    # Pubblica il PROGETTO (non la .sln) in ./publish
-    # StaticWebAssetBasePath=/ios per far funzionare gli asset sotto /ios/
-    - name: Publish Blazor WASM
-      run: dotnet publish ./BlazorApp_IOS.csproj -c Release -o publish -p:StaticWebAssetBasePath=ios --no-build
+      - name: Publish (Release)
+        run: dotnet publish "${{ env.PROJECT_PATH }}" -c Release -o "${{ env.OUT_DIR }}" --nologo
 
-    # Verifica che l'output contenga index.html
-    - name: Verify publish output
-      run: |
-        ls -la publish || true
-        ls -la publish/wwwroot || true
-        test -f publish/wwwroot/index.html
+      # ? Fissa il <base href> su /web/ nell'index e poi crea 404 gi� corretto
+      - name: Fix <base href> for /${{ env.REPO_SUBDIR }}/ and create 404.html
+        shell: bash
+        run: |
+          idx="${{ env.PUBLISH_DIR }}/index.html"
+          # sostituisce sia <base href="/"> sia <base href="./">
+          sed -i 's|<base href="/">|<base href="/'${{ env.REPO_SUBDIR }}'/">|g' "$idx"
+          sed -i 's|<base href="./">|<base href="/'${{ env.REPO_SUBDIR }}'/">|g' "$idx"
+          # crea 404.html dopo il fix, cos� ha la base corretta
+          cp "$idx" "${{ env.PUBLISH_DIR }}/404.html"
 
-    - name: Deploy to GitHub Pages
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./publish/wwwroot
-        # publish_branch: gh-pages  # (facoltativo; default è gh-pages)
+      - name: Create .nojekyll
+        run: touch "${{ env.PUBLISH_DIR }}/.nojekyll"
+
+      # (Diagnostica utile se qualcosa non torna)
+      - name: List payload
+        shell: bash
+        run: |
+          echo "wwwroot content:" && ls -la "${{ env.PUBLISH_DIR }}"
+          echo "Base tag in index.html:" && grep -o '<base href="[^"]*"' "${{ env.PUBLISH_DIR }}/index.html" || true
+
+      - name: Deploy to gh-pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ${{ env.PUBLISH_DIR }}
+          enable_jekyll: false
+          keep_files: false
+          commit_message: "Deploy: ${{ github.sha }}"
