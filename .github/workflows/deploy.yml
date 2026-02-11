@@ -4,7 +4,7 @@ on:
   push:
     branches: [ "main" ]
 
-# necessario per permettere il push su gh-pages
+# consente al workflow di scrivere su gh-pages
 permissions:
   contents: write
 
@@ -22,16 +22,26 @@ jobs:
         dotnet-version: '10.x'
 
     - name: Restore
-      run: dotnet restore
+      run: dotnet restore ./BlazorApp_IOS.csproj
 
-    # Pubblica il PROGETTO (csproj), non la SOLUZIONE (sln).
-    # Sostituisci il path se il tuo progetto non è in questa posizione.
+    - name: Build (Release)
+      run: dotnet build ./BlazorApp_IOS.csproj -c Release --no-restore
+
+    # Pubblica il PROGETTO (non la .sln) in ./publish
+    # StaticWebAssetBasePath=/ios per far funzionare gli asset sotto /ios/
     - name: Publish Blazor WASM
-      run: dotnet publish ./BlazorApp_IOS/BlazorApp_IOS.csproj -c Release -o publish
+      run: dotnet publish ./BlazorApp_IOS.csproj -c Release -o publish -p:StaticWebAssetBasePath=/ios --no-build
+
+    # Verifica che l'output contenga index.html
+    - name: Verify publish output
+      run: |
+        ls -la publish || true
+        ls -la publish/wwwroot || true
+        test -f publish/wwwroot/index.html
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./publish/wwwroot
-        # publish_branch: gh-pages   # opzionale, default già "gh-pages"
+        # publish_branch: gh-pages  # (facoltativo; default è gh-pages)
