@@ -1,26 +1,37 @@
-name: Deploy Blazor WASM to GitHub Pages
+﻿name: Deploy Blazor WASM to GitHub Pages
 
 on:
   push:
     branches: [ "main" ]
+
+# necessario per permettere il push su gh-pages
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
-      
+    - name: Checkout
+      uses: actions/checkout@v4
+
     - name: Setup .NET
-      uses: actions/setup-dotnet@v3
+      uses: actions/setup-dotnet@v4
       with:
         dotnet-version: '10.x'
 
-    - name: Publish .NET Project
-      run: dotnet publish -c Release -o publish
+    - name: Restore
+      run: dotnet restore
+
+    # ⚠️ Pubblica il PROGETTO (csproj), non la SOLUZIONE (sln).
+    # Sostituisci il path se il tuo progetto non è in questa posizione.
+    - name: Publish Blazor WASM
+      run: dotnet publish ./BlazorApp_IOS/BlazorApp_IOS.csproj -c Release -o publish
 
     - name: Deploy to GitHub Pages
       uses: peaceiris/actions-gh-pages@v3
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         publish_dir: ./publish/wwwroot
+        # publish_branch: gh-pages   # opzionale, default già "gh-pages"
