@@ -57,9 +57,11 @@
     <script>
         // Clic sul banner → ricarica la PWA
         document.getElementById('update-banner').onclick = () => {
-            window.location.reload();
+            window.location.reload(true);
         };
     </script>
+
+    <script>window.forceHardReload = function () { window.location.replace(window.location.href); }</script>
 
 
 </head>
