@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: gh-pages
+  cancel-in-progress: true
+
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
@@ -16,41 +20,45 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET
+      - name: Setup .NET SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
 
-      # Build + Publish (Release) nel path "publish"
-      - name: Publish
-        run: dotnet publish ./BlazorApp_IOS.csproj -c Release -o publish --nologo
+      # Build + Publish (Release) nell'output locale "publish"
+      - name: Publish Blazor WASM
+        run: dotnet publish BlazorApp_IOS.csproj -c Release -o publish --nologo
 
-      # Fissa il base-href in modo SICURO:
-      # - sostituisce solo <base href="/"> o <base href="./">
-      # - non tocca altro
+      # Fissa il <base href> a /ios/ nell'index generato
+      # (sostituisce solo i casi "/" e "./" senza toccare altro)
       - name: Fix base href to /ios/
         shell: bash
         run: |
           idx="publish/wwwroot/index.html"
           sed -i 's|<base href="/"|<base href="/ios/"|g' "$idx"
-          sed -i 's|<base href="./"|<base href="/ios/"|g' "$idx"      
+          sed -i 's|<base href="./"|<base href="/ios/"|g' "$idx"
 
-      # .nojekyll per servire _framework
+      # Genera version.json per il polling "in-app"
+      - name: Generate version.json
+        shell: bash
+        run: |
+          VERSION="$(date +'%Y%m%d%H%M%S')"
+          echo "{ \"version\": \"${VERSION}\" }" > publish/wwwroot/version.json
+
+      # Necessario per servire la cartella _framework su GitHub Pages
       - name: Create .nojekyll
-        run: touch publish/wwwroot/.nojekyll     
+        run: touch publish/wwwroot/.nojekyll
 
-      # (Diagnostica utile: stampa cosa stiamo per pubblicare)
+      # (Diagnostica utile in caso di problemi)
       - name: List payload
         shell: bash
         run: |
           echo "== publish/wwwroot =="
           ls -la publish/wwwroot | sed -n '1,200p'
-          echo "== base in index.html =="
+          echo "== base href in index.html =="
           grep -o '<base href="[^"]*"' publish/wwwroot/index.html || true
 
-      # Deploy **pulito** su gh-pages:
-      # - force_orphan: true => pubblica su branch "vergine" (nessun residuo)
-      # - keep_files: false  => cancella tutto e poi copia i nuovi file
+      # Deploy completamente pulito su gh-pages
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
@@ -60,9 +68,3 @@ jobs:
           keep_files: false
           enable_jekyll: false
           commit_message: "Deploy ${{ github.sha }}"
-
-      - name: Generate version.json
-	shell: bash
-	working-directory: publish/wwwroot
-	run: |
-	printf '{ "version": "%s" }\n' "$(date +'%Y%m%d%H%M%S')" > version.json
