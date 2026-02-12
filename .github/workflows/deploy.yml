@@ -39,14 +39,6 @@ jobs:
       - name: Create .nojekyll
         run: touch publish/wwwroot/.nojekyll     
 
-
-	- name: Generate version.json
-	  shell: bash
-	  working-directory: publish/wwwroot
-	  run: |
-	  printf '{ "version": "%s" }\n' "$(date +'%Y%m%d%H%M%S')" > version.json
-
-
       # (Diagnostica utile: stampa cosa stiamo per pubblicare)
       - name: List payload
         shell: bash
@@ -68,3 +60,9 @@ jobs:
           keep_files: false
           enable_jekyll: false
           commit_message: "Deploy ${{ github.sha }}"
+
+      - name: Generate version.json
+	shell: bash
+	working-directory: publish/wwwroot
+	run: |
+	printf '{ "version": "%s" }\n' "$(date +'%Y%m%d%H%M%S')" > version.json
