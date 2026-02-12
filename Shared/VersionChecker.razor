@@ -1,7 +1,8 @@
 ﻿@inject HttpClient Http
-@implements IDisposable
+@inject NavigationManager Nav
+@implements IAsyncDisposable
 
-@if (UpdateAvailable)
+@if (updateAvailable)
 {
     <div class="update-banner" @onclick="ApplyUpdate">
         È disponibile una nuova versione — clicca per aggiornare
@@ -10,22 +11,51 @@
 
 @code {
     private string? currentVersion;
-    private bool UpdateAvailable = false;
-    private System.Timers.Timer? timer;
+    private bool updateAvailable;
+    private PeriodicTimer? timer;
+    private CancellationTokenSource? cts;
 
     protected override async Task OnInitializedAsync()
     {
+        // prima lettura
         currentVersion = await LoadVersion();
-        timer = new System.Timers.Timer(15000); // ogni 15 secondi
-        timer.Elapsed += async (_, _) => await CheckVersion();
-        timer.Start();
+
+        // avvia polling ogni 15s
+        cts = new CancellationTokenSource();
+        timer = new PeriodicTimer(TimeSpan.FromSeconds(15));
+        _ = PollAsync(cts.Token);   // avvio “in background” controllato
+    }
+
+    private async Task PollAsync(CancellationToken token)
+    {
+        if (timer is null) return;
+
+        try
+        {
+            while (await timer.WaitForNextTickAsync(token))
+            {
+                var latest = await LoadVersion();
+                if (!string.IsNullOrWhiteSpace(latest) && latest != currentVersion)
+                {
+                    updateAvailable = true;
+                    await InvokeAsync(StateHasChanged);
+                    break; // smetti di pollare: una nuova versione è disponibile
+                }
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // ignorata alla Dispose
+        }
     }
 
     private async Task<string?> LoadVersion()
     {
         try
         {
-            return await Http.GetStringAsync("version.json");
+            // cache-busting per evitare risposte dalla cache SW
+            var ts = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
+            return await Http.GetStringAsync($"version.json?ts={ts}");
         }
         catch
         {
@@ -33,24 +63,17 @@
         }
     }
 
-    private async Task CheckVersion()
-    {
-        var latest = await LoadVersion();
-        if (latest != null && latest != currentVersion)
-        {
-            UpdateAvailable = true;
-            InvokeAsync(StateHasChanged);
-        }
-    }
-
     private void ApplyUpdate()
     {
-        // ricarica la PWA
-        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+        // ricarica forzando il download della nuova versione
+        Nav.NavigateTo(Nav.Uri, forceLoad: true);
     }
 
-    public void Dispose()
+    public async ValueTask DisposeAsync()
     {
+        cts?.Cancel();
         timer?.Dispose();
+        cts?.Dispose();
+        await Task.CompletedTask;
     }
 }
