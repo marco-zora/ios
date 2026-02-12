@@ -69,7 +69,7 @@
     {
         // ricarica forzando il download della nuova versione
         //Nav.NavigateTo(Nav.Uri, forceLoad: true);
-        await JS.InvokeVoidAsync("forceHardReloadAndClose")
+        await JS.InvokeVoidAsync("forceHardReloadAndClose");
     }
 
     public async ValueTask DisposeAsync()
