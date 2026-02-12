@@ -20,14 +20,46 @@
     <!--Questo forza il browser a controllare aggiornamenti del service worker-->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let reg of registrations) {
-                    reg.update();
-                }
+
+            navigator.serviceWorker.addEventListener('controllerchange', () => {
+                // Quando il nuovo SW prende il controllo → nuova versione!
+                const banner = document.getElementById('update-banner');
+                banner.style.display = 'block';
+            });
+
+            // Chiedi al SW se ci sono aggiornamenti
+            navigator.serviceWorker.register('service-worker.published.js');
+
+            // Richiede al SW di controllare aggiornamenti
+            navigator.serviceWorker.getRegistration().then(reg => {
+                if (reg) reg.update();
             });
         }
     </script>
 
+    <!-- BANNER DI AGGIORNAMENTO -->
+    <div id="update-banner"
+         style="display:none;
+            position:fixed;
+            bottom:20px;
+            left:50%;
+            transform:translateX(-50%);
+            padding:12px 20px;
+            background:#0078d4;
+            color:white;
+            border-radius:10px;
+            font-size:16px;
+            cursor:pointer;
+            z-index:10000;">
+        È disponibile una nuova versione — aggiorna
+    </div>
+
+    <script>
+        // Clic sul banner → ricarica la PWA
+        document.getElementById('update-banner').onclick = () => {
+            window.location.reload();
+        };
+    </script>
 
 
 </head>
