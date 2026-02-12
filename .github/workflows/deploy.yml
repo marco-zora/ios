@@ -2,13 +2,13 @@
 
 on:
   push:
-    branches: [ "main" ]          # il branch su cui fai push da Visual Studio
-  workflow_dispatch:               # facoltativo: avvio manuale dall'UI di GitHub
+    branches: [ "main" ]      # <il branch su cui fai push da Visual Studio
+  workflow_dispatch:          # facoltativo: per lanciare manualmente dall'UI
 
 permissions:
-  contents: write                  # richiesto da peaceiris per push su gh-pages
+  contents: write             # richiesto da peaceiris per push su gh-pages
 
-# Evita run accodati: se pushi più volte, mantiene solo l'ultimo
+# Evita run accodati: se pushi piu volte, mantiene solo l'ultimo
 concurrency:
   group: gh-pages
   cancel-in-progress: true
@@ -18,10 +18,10 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PROJECT_PATH: BlazorApp_IOS.csproj            # <-- aggiorna se il .csproj ha nome diverso
+      PROJECT_PATH: BlazorApp_IOS.csproj       # <aggiorna se il .csproj ha un nome/percorso diverso
       OUT_DIR:      build/publish
       PUBLISH_DIR:  build/publish/wwwroot
-      REPO_SUBDIR:  ios                              # sottocartella del tuo sito su Pages
+      REPO_SUBDIR:  ios                        # <sottocartella del sito su Pages
 
     steps:
       - name: Checkout
@@ -31,8 +31,10 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+          # Se stai usando una preview:
+          # dotnet-quality: 'preview'
 
-      # (Opzionale ma consigliato) cache NuGet per velocizzare le build successive
+      # (Opzionale ma consigliato) cache NuGet per velocizzare repeat build
       - name: NuGet cache
         uses: actions/cache@v4
         with:
@@ -47,34 +49,34 @@ jobs:
       - name: Publish (Release)
         run: dotnet publish "${{ env.PROJECT_PATH }}" -c Release -o "${{ env.OUT_DIR }}" --nologo
 
-      # Fissa il <base href> su /ios/ nell'index e crea 404.html coerente
+      # ? Fissa il <base href> su /web/ nell'index e poi crea 404 gi  corretto
       - name: Fix <base href> for /${{ env.REPO_SUBDIR }}/ and create 404.html
         shell: bash
         run: |
           idx="${{ env.PUBLISH_DIR }}/index.html"
           # sostituisce sia <base href="/"> sia <base href="./">
-          sed -i 's|<base href="/"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
-          sed -i 's|<base href="./"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
-          # crea 404.html dopo il fix, così eredita la base corretta
+          sed -i 's|<base href="/">|<base href="/'${{ env.REPO_SUBDIR }}'/">|g' "$idx"
+          sed -i 's|<base href="./">|<base href="/'${{ env.REPO_SUBDIR }}'/">|g' "$idx"
+          # crea 404.html dopo il fix, cos  ha la base corretta
           cp "$idx" "${{ env.PUBLISH_DIR }}/404.html"
 
       - name: Create .nojekyll
-        run: |
-          touch "${{ env.PUBLISH_DIR }}/.nojekyll"
+        run: touch "${{ env.PUBLISH_DIR }}/.nojekyll"
 
-      # Genera version.json per il polling "in-app"
+ 	# Genera version.json per il polling "in-app"
       - name: Generate version.json
         shell: bash
         run: |
           VERSION="$(date +'%Y%m%d%H%M%S')"
           echo "{ \"version\": \"${VERSION}\" }" > "${{ env.PUBLISH_DIR }}/version.json"
 
-      # Diagnostica (utile se qualcosa non torna)
+      # (Diagnostica utile se qualcosa non torna)
       - name: List payload
         shell: bash
         run: |
           echo "wwwroot content:" && ls -la "${{ env.PUBLISH_DIR }}"
-          echo "Base tag in index.html:" && grep -o '<base href="[^"]*"' "${{ env.PUBLISH_DIR }}/index.html" || true
+          echo "Base tag in index.html:" && grep -o '<base href="[^"]*"' "${{ env.PUBLISH_DIR }}/index.html" || true	
+
 
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
