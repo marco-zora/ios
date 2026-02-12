@@ -61,7 +61,27 @@
         };
     </script>
 
-    <script>window.forceHardReload = function () { window.location.replace(window.location.href); }</script>
+    <script>
+        window.forceHardReloadAndClose = function () {
+
+            // 1) Chiude completamente il processo PWA (solo se installed)
+            if (window.matchMedia('(display-mode: standalone)').matches ||
+                navigator.standalone === true) {
+
+                // Chiusura forzata modo PWA
+                window.close();
+
+                // Per sicurezza, manda un fallback in caso window.close() non funzioni:
+                setTimeout(() => {
+                    window.location.replace(window.location.href);
+                }, 300);
+            }
+            else {
+                // Browser mode → hard reload normale
+                window.location.replace(window.location.href);
+            }
+        };
+    </script>
 
 
 </head>
