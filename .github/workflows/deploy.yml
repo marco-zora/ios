@@ -39,6 +39,13 @@ jobs:
       - name: Create .nojekyll
         run: touch publish/wwwroot/.nojekyll
 
+      # Genera version.json per il polling "in-app"
+      - name: Generate version.json
+        shell: bash
+        run: |
+          VERSION="$(date +'%Y%m%d%H%M%S')"
+          echo "{ \"version\": \"${VERSION}\" }" > "${{ env.PUBLISH_DIR }}/version.json"
+
       # (Diagnostica utile: stampa cosa stiamo per pubblicare)
       - name: List payload
         shell: bash
