@@ -58,6 +58,12 @@ jobs:
           # crea 404.html dopo il fix, così eredita la base corretta
           cp "$idx" "${{ env.PUBLISH_DIR }}/404.html"
 
+      # Genera version.json per il polling "in-app"
+      - name: Generate version.json
+        shell: bash
+        run: |
+          VERSION="$(date +'%Y%m%d%H%M%S')"
+          echo "{ \"version\": \"${VERSION}\" }" > publish/wwwroot/version.json
       - name: Create .nojekyll
         run: |
           touch "${{ env.PUBLISH_DIR }}/.nojekyll"
