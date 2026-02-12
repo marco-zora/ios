@@ -33,14 +33,7 @@ jobs:
         run: |
           idx="publish/wwwroot/index.html"
           sed -i 's|<base href="/"|<base href="/ios/"|g' "$idx"
-          sed -i 's|<base href="./"|<base href="/ios/"|g' "$idx"
-
-      # Versioning per il polling (version.json) dentro wwwroot
-      - name: Generate version.json
-        shell: bash
-        run: |
-          ts=$(date +'%Y%m%d%H%M%S')
-          echo "{ \"version\": \"${ts}\" }" > publish/wwwroot/version.json
+          sed -i 's|<base href="./"|<base href="/ios/"|g' "$idx"      
 
       # .nojekyll per servire _framework
       - name: Create .nojekyll
