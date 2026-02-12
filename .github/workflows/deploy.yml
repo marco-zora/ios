@@ -2,13 +2,12 @@
 
 on:
   push:
-    branches: [ "main" ]          # il branch su cui fai push da Visual Studio
-  workflow_dispatch:              # facoltativo: avvio manuale dall'UI di GitHub
+    branches: [ "main" ]          # branch su cui fai push da Visual Studio
+  workflow_dispatch:              # avvio manuale dall'UI (facoltativo)
 
 permissions:
-  contents: write                 # richiesto da peaceiris per push su gh-pages
+  contents: write                 # necessario a peaceiris per push su gh-pages
 
-# Evita run accodati: se pushi più volte, mantiene solo l'ultimo
 concurrency:
   group: gh-pages
   cancel-in-progress: true
@@ -18,16 +17,16 @@ jobs:
     runs-on: ubuntu-latest
 
     env:
-      PROJECT_PATH: BlazorApp_IOS.csproj            # <-- aggiorna se il .csproj ha nome diverso
+      PROJECT_PATH: BlazorApp_IOS.csproj     # <-- cambia se il .csproj ha nome diverso
       OUT_DIR:      build/publish
       PUBLISH_DIR:  build/publish/wwwroot
-      REPO_SUBDIR:  ios                              # sottocartella del tuo sito su Pages
+      REPO_SUBDIR:  ios                      # sottocartella del sito su Pages (/ios/)
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET SDK                         # .NET 10 SDK
+      - name: Setup .NET SDK (.NET 10)
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
@@ -38,40 +37,49 @@ jobs:
       - name: Publish (Release)
         run: dotnet publish "${{ env.PROJECT_PATH }}" -c Release -o "${{ env.OUT_DIR }}" --nologo
 
-      # Fissa il <base href> su /ios/ nell'index e crea 404.html coerente
+      # Fissa il <base href> nell'index a /ios/ e crea 404.html coerente
       - name: Fix <base href> for /${{ env.REPO_SUBDIR }}/ and create 404.html
         shell: bash
         run: |
+          set -euo pipefail
           idx="${{ env.PUBLISH_DIR }}/index.html"
-          # sostituisce sia <base href="/"> sia <base href="./">
+          # sostituisce solo i casi <base href="/"> e <base href="./">
           sed -i 's|<base href="/"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
           sed -i 's|<base href="./"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
-          # crea 404.html dopo il fix, così eredita la base corretta
+          # 404.html prende la stessa base dell'index
           cp "$idx" "${{ env.PUBLISH_DIR }}/404.html"
 
       # Genera version.json per il polling "in-app"
       - name: Generate version.json
         shell: bash
         run: |
+          set -euo pipefail
+          mkdir -p "${{ env.PUBLISH_DIR }}"
           VERSION="$(date +'%Y%m%d%H%M%S')"
-          echo "{ \"version\": \"${VERSION}\" }" > publish/wwwroot/version.json
+          printf '{ "version": "%s" }\n' "$VERSION" > "${{ env.PUBLISH_DIR }}/version.json"
 
+      # Necessario per servire la cartella _framework su GitHub Pages
       - name: Create .nojekyll
         run: |
+          mkdir -p "${{ env.PUBLISH_DIR }}"
           touch "${{ env.PUBLISH_DIR }}/.nojekyll"
 
-      # Diagnostica (utile se qualcosa non torna)
+      # Diagnostica utile
       - name: List payload
         shell: bash
         run: |
-          echo "wwwroot content:" && ls -la "${{ env.PUBLISH_DIR }}"
-          echo "Base tag in index.html:" && grep -o '<base href="[^"]*"' "${{ env.PUBLISH_DIR }}/index.html" || true
+          echo "== ${PUBLISH_DIR} =="
+          ls -la "${{ env.PUBLISH_DIR }}" | sed -n '1,200p'
+          echo "== base href in index.html =="
+          grep -o '<base href="[^"]*"' "${{ env.PUBLISH_DIR }}/index.html" || true
 
+      # Deploy pulito su gh-pages (nessun residuo di versioni precedenti)
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_dir: ${{ env.PUBLISH_DIR }}
-          enable_jekyll: false
+          force_orphan: true
           keep_files: false
+          enable_jekyll: false
           commit_message: "Deploy: ${{ github.sha }}"
