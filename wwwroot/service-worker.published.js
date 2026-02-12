@@ -1,4 +1,4 @@
-// Caution! Be sure you understand the caveats before publishing an application with
+﻿// Caution! Be sure you understand the caveats before publishing an application with
 // offline support. See https://aka.ms/blazor-offline-considerations
 
 self.importScripts('./service-worker-assets.js');
@@ -53,3 +53,16 @@ async function onFetch(event) {
 
     return cachedResponse || fetch(event.request);
 }
+
+//Questo fa due cose: 
+//skipWaiting() → installa subito la nuova versione
+//clients.claim() → ricarica immediatamente le pagine aperte
+//Risultato: alla prossima pubblicazione, la PWA si aggiornerà da sola.
+
+self.addEventListener('install', () => {
+    self.skipWaiting();
+});
+
+self.addEventListener('activate', event => {
+    event.waitUntil(self.clients.claim());
+});
