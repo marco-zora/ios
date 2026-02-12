@@ -1,88 +1,69 @@
-﻿name: Deploy Blazor WASM to GitHub Pages (branch gh-pages)
+﻿name: Deploy Blazor WASM to GitHub Pages
 
 on:
   push:
-    branches: [ "main" ]      # <il branch su cui fai push da Visual Studio
-  workflow_dispatch:          # facoltativo: per lanciare manualmente dall'UI
+    branches: [ "main" ]
+  workflow_dispatch:
 
 permissions:
-  contents: write             # richiesto da peaceiris per push su gh-pages
-
-# Evita run accodati: se pushi piu volte, mantiene solo l'ultimo
-concurrency:
-  group: gh-pages
-  cancel-in-progress: true
+  contents: write
 
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
 
-    env:
-      PROJECT_PATH: BlazorApp_IOS.csproj       # <aggiorna se il .csproj ha un nome/percorso diverso
-      OUT_DIR:      build/publish
-      PUBLISH_DIR:  build/publish/wwwroot
-      REPO_SUBDIR:  ios                        # <sottocartella del sito su Pages
-
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup .NET 10 SDK
+      - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
-          # Se stai usando una preview:
-          # dotnet-quality: 'preview'
 
-      # (Opzionale ma consigliato) cache NuGet per velocizzare repeat build
-      - name: NuGet cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.nuget/packages
-          key: nuget-${{ runner.os }}-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            nuget-${{ runner.os }}-
+      # Build + Publish (Release) nel path "publish"
+      - name: Publish
+        run: dotnet publish ./BlazorApp_IOS.csproj -c Release -o publish --nologo
 
-      - name: Restore
-        run: dotnet restore "${{ env.PROJECT_PATH }}"
-
-      - name: Publish (Release)
-        run: dotnet publish "${{ env.PROJECT_PATH }}" -c Release -o "${{ env.OUT_DIR }}" --nologo
-
-      # ? Fissa il <base href> su /web/ nell'index e poi crea 404 gi  corretto
-      - name: Fix <base href> for /${{ env.REPO_SUBDIR }}/ and create 404.html
+      # Fissa il base-href in modo SICURO:
+      # - sostituisce solo <base href="/"> o <base href="./">
+      # - non tocca altro
+      - name: Fix base href to /ios/
         shell: bash
         run: |
-          idx="${{ env.PUBLISH_DIR }}/index.html"
-          # sostituisce sia <base href="/"> sia <base href="./">
-          sed -i 's|<base href="/">|<base href="/'${{ env.REPO_SUBDIR }}'/">|g' "$idx"
-          sed -i 's|<base href="./">|<base href="/'${{ env.REPO_SUBDIR }}'/">|g' "$idx"
-          # crea 404.html dopo il fix, cos  ha la base corretta
-          cp "$idx" "${{ env.PUBLISH_DIR }}/404.html"
+          idx="publish/wwwroot/index.html"
+          sed -i 's|<base href="/"|<base href="/ios/"|g' "$idx"
+          sed -i 's|<base href="./"|<base href="/ios/"|g' "$idx"
 
-      - name: Create .nojekyll
-        run: touch "${{ env.PUBLISH_DIR }}/.nojekyll"
-
- 	# Genera version.json per il polling "in-app"
+      # Versioning per il polling (version.json) dentro wwwroot
       - name: Generate version.json
         shell: bash
         run: |
-          VERSION="$(date +'%Y%m%d%H%M%S')"
-          echo "{ \"version\": \"${VERSION}\" }" > "${{ env.PUBLISH_DIR }}/version.json"
+          ts=$(date +'%Y%m%d%H%M%S')
+          echo "{ \"version\": \"${ts}\" }" > publish/wwwroot/version.json
 
-      # (Diagnostica utile se qualcosa non torna)
+      # .nojekyll per servire _framework
+      - name: Create .nojekyll
+        run: touch publish/wwwroot/.nojekyll
+
+      # (Diagnostica utile: stampa cosa stiamo per pubblicare)
       - name: List payload
         shell: bash
         run: |
-          echo "wwwroot content:" && ls -la "${{ env.PUBLISH_DIR }}"
-          echo "Base tag in index.html:" && grep -o '<base href="[^"]*"' "${{ env.PUBLISH_DIR }}/index.html" || true	
+          echo "== publish/wwwroot =="
+          ls -la publish/wwwroot | sed -n '1,200p'
+          echo "== base in index.html =="
+          grep -o '<base href="[^"]*"' publish/wwwroot/index.html || true
 
-
+      # Deploy **pulito** su gh-pages:
+      # - force_orphan: true => pubblica su branch "vergine" (nessun residuo)
+      # - keep_files: false  => cancella tutto e poi copia i nuovi file
       - name: Deploy to gh-pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ${{ env.PUBLISH_DIR }}
-          enable_jekyll: false
+          publish_dir: publish/wwwroot
+          force_orphan: true
           keep_files: false
-          commit_message: "Deploy: ${{ github.sha }}"
+          enable_jekyll: false
+          commit_message: "Deploy ${{ github.sha }}"
