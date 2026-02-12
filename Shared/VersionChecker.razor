@@ -1,0 +1,56 @@
+﻿@inject HttpClient Http
+@implements IDisposable
+
+@if (UpdateAvailable)
+{
+    <div class="update-banner" @onclick="ApplyUpdate">
+        È disponibile una nuova versione — clicca per aggiornare
+    </div>
+}
+
+@code {
+    private string? currentVersion;
+    private bool UpdateAvailable = false;
+    private System.Timers.Timer? timer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        currentVersion = await LoadVersion();
+        timer = new System.Timers.Timer(15000); // ogni 15 secondi
+        timer.Elapsed += async (_, _) => await CheckVersion();
+        timer.Start();
+    }
+
+    private async Task<string?> LoadVersion()
+    {
+        try
+        {
+            return await Http.GetStringAsync("version.json");
+        }
+        catch
+        {
+            return null;
+        }
+    }
+
+    private async Task CheckVersion()
+    {
+        var latest = await LoadVersion();
+        if (latest != null && latest != currentVersion)
+        {
+            UpdateAvailable = true;
+            InvokeAsync(StateHasChanged);
+        }
+    }
+
+    private void ApplyUpdate()
+    {
+        // ricarica la PWA
+        NavigationManager.NavigateTo(NavigationManager.Uri, forceLoad: true);
+    }
+
+    public void Dispose()
+    {
+        timer?.Dispose();
+    }
+}
