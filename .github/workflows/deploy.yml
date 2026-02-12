@@ -30,6 +30,15 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '10.0.x'
+      
+      # Genera version.json per il polling "in-app"
+      - name: Generate version.json
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "${{ env.PUBLISH_DIR }}"
+          VERSION="$(date +'%Y%m%d%H%M%S')"
+          printf '{ "version": "%s" }\n' "$VERSION" > "${{ env.PUBLISH_DIR }}/version.json"
 
       - name: Restore
         run: dotnet restore "${{ env.PROJECT_PATH }}"
@@ -48,15 +57,6 @@ jobs:
           sed -i 's|<base href="./"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
           # 404.html prende la stessa base dell'index
           cp "$idx" "${{ env.PUBLISH_DIR }}/404.html"
-
-      # Genera version.json per il polling "in-app"
-      - name: Generate version.json
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p "${{ env.PUBLISH_DIR }}"
-          VERSION="$(date +'%Y%m%d%H%M%S')"
-          printf '{ "version": "%s" }\n' "$VERSION" > "${{ env.PUBLISH_DIR }}/version.json"
 
       # Necessario per servire la cartella _framework su GitHub Pages
       - name: Create .nojekyll
