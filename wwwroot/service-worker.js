@@ -1,10 +1,13 @@
 ﻿// In development, always fetch from the network and do not enable offline support.
 // This is because caching would make development more difficult (changes would not
 // be reflected on the first load after each change).
-// self.addEventListener('fetch', () => {});
+
+self.addEventListener('fetch', () => { });
+
 
 // Network First: tenta di recuperare la risorsa dalla rete, se fallisce (ad esempio, se l'utente è offline), allora cerca nella cache.
 // aggiorna la cache con la risposta più recente dalla rete, in modo che la prossima volta che l'utente accede alla risorsa, possa essere servita dalla cache se la rete non è disponibile.
+/*
 self.addEventListener('fetch',
     function (event) {
         event.respondWith(
@@ -17,7 +20,7 @@ self.addEventListener('fetch',
                 })
         );
     });
-
+    */
 
 //Questo fa due cose:
 //skipWaiting() → installa subito la nuova versione
