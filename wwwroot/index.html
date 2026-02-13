@@ -32,7 +32,20 @@
         <span class="dismiss">🗙</span>
     </div>
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
-    <script>navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' });</script>
+    <script> 
+    
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('service-worker.js') // This path needs to be correct
+                .then(registration => {
+                    console.log('Service Worker registered with scope:', registration.scope);
+                })
+                .catch(error => {
+                    console.error('Service Worker registration failed:', error);
+                });
+        }
+
+    
+    </script>
 </body>
 
 </html>
