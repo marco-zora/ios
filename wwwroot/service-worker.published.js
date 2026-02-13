@@ -2,9 +2,9 @@
 // offline support. See https://aka.ms/blazor-offline-considerations
 
 self.importScripts('./service-worker-assets.js');
-self.addEventListener('install', event => event.waitUntil(onInstall(event)));
-self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
-self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
+//self.addEventListener('install', event => event.waitUntil(onInstall(event)));
+//self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
+//self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
@@ -16,6 +16,8 @@ const base = "/";
 const baseUrl = new URL(base, self.origin);
 const manifestUrlList = self.assetsManifest.assets.map(asset => new URL(asset.url, baseUrl).href);
 
+
+/*
 async function onInstall(event) {
     console.info('Service worker: Install');
 
@@ -37,7 +39,6 @@ async function onActivate(event) {
         .map(key => caches.delete(key)));
 }
 
-/*
 async function onFetch(event) {
     let cachedResponse = null;
     if (event.request.method === 'GET') {
@@ -62,6 +63,49 @@ async function onFetch(event) {
 // manifestUrlList: array di asset precache (iniezione build Blazor)
 // Esempio: const manifestUrlList = self.assetsManifest?.assets?.map(a => new URL(a.url, self.location).href) ?? [];
 
+
+
+self.addEventListener('fetch', event => {
+    if (event.request.mode === 'navigate') {
+        // Network-first per index.html e navigazioni
+        event.respondWith((async () => {
+            try {
+                const networkResponse = await fetch(event.request, { cache: 'no-cache' });
+                const cache = await caches.open('offline-cache');
+                cache.put('index.html', networkResponse.clone());
+                return networkResponse;
+            } catch {
+                // Offline: usa la versione in cache
+                const cache = await caches.open('offline-cache');
+                const cached = await cache.match('index.html');
+                return cached || Response.error();
+            }
+        })());
+        return;
+    }
+
+    // Per il resto puoi usare Cache First o Network First come preferisci
+    event.respondWith((async () => {
+        const cache = await caches.open('offline-cache');
+        const cached = await cache.match(event.request);
+        if (cached) return cached;
+
+        try {
+            const networkResponse = await fetch(event.request);
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+        } catch {
+            return cached || Response.error();
+        }
+    })());
+});
+
+
+
+
+
+
+/*
 self.addEventListener('fetch', event => {
     // Gestiamo solo richieste GET; per il resto lasciamo passare
     if (event.request.method !== 'GET') {
@@ -70,6 +114,34 @@ self.addEventListener('fetch', event => {
 
     event.respondWith(onFetchNetworkFirst(event));
 });
+*/
+
+self.addEventListener('install', event => {
+    event.waitUntil((async () => {
+        const cache = await caches.open(cacheName);
+        // Esempio: precache index e asset manifest
+        const toPrecache = ['index.html', ...(manifestUrlList || [])];
+        await cache.addAll(toPrecache);
+        self.skipWaiting();
+    })());
+});
+
+self.addEventListener('activate', event => {
+    event.waitUntil((async () => {
+        // opzionale: pulizia cache vecchie
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => (k !== cacheName ? caches.delete(k) : Promise.resolve())));
+        self.clients.claim();
+    })());
+});
+
+function fetchWithTimeout(req, ms = 5000) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    return fetch(req, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+// poi usa fetchWithTimeout(req) al posto di fetch(req)
+
 
 async function onFetchNetworkFirst(event) {
     const req = event.request;
