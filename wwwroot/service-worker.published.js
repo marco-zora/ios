@@ -58,7 +58,7 @@ async function onFetch(event) {
 
 // Esempio: service-worker.js Network FIRST con fallback cache per navigazioni SPA (index.html) e risorse offline (manifest)
 
-const cacheName = 'app-cache-v1';
+// const cacheName = 'app-cache-v1';
 // manifestUrlList: array di asset precache (iniezione build Blazor)
 // Esempio: const manifestUrlList = self.assetsManifest?.assets?.map(a => new URL(a.url, self.location).href) ?? [];
 
