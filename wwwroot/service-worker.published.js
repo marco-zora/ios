@@ -37,6 +37,7 @@ async function onActivate(event) {
         .map(key => caches.delete(key)));
 }
 
+/*
 async function onFetch(event) {
     let cachedResponse = null;
     if (event.request.method === 'GET') {
@@ -52,5 +53,68 @@ async function onFetch(event) {
     }
 
     return cachedResponse || fetch(event.request);
+}
+*/
+
+// Esempio: service-worker.js Network FIRST con fallback cache per navigazioni SPA (index.html) e risorse offline (manifest)
+
+const cacheName = 'app-cache-v1';
+// manifestUrlList: array di asset precache (iniezione build Blazor)
+// Esempio: const manifestUrlList = self.assetsManifest?.assets?.map(a => new URL(a.url, self.location).href) ?? [];
+
+self.addEventListener('fetch', event => {
+    // Gestiamo solo richieste GET; per il resto lasciamo passare
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    event.respondWith(onFetchNetworkFirst(event));
+});
+
+async function onFetchNetworkFirst(event) {
+    const req = event.request;
+
+    // Rileva le navigazioni (SPA) che NON puntano a risorse del manifest
+    const isNavigation = req.mode === 'navigate';
+    const isOfflineResource = manifestUrlList?.some(url => url === req.url) === true;
+
+    // Per le navigazioni, la risorsa "logica" da usare come fallback cache è index.html
+    const cacheKeyForNav = 'index.html';
+
+    try {
+        // 1) Prova la rete prima di tutto
+        const networkResponse = await fetch(req);
+
+        // 2) Se risposta ok/opaque: metti in cache (solo GET)
+        if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
+            // Apri cache e clona risposta
+            const cache = await caches.open(cacheName);
+            // Per le navigazioni, ha senso mettere in cache anche index.html
+            if (isNavigation && !isOfflineResource) {
+                cache.put(cacheKeyForNav, networkResponse.clone());
+            } else {
+                cache.put(req, networkResponse.clone());
+            }
+        }
+
+        // 3) Ritorna sempre la risposta di rete (Network First)
+        return networkResponse;
+    } catch (err) {
+        // 4) Se la rete fallisce, fallback sulla cache
+        const cache = await caches.open(cacheName);
+
+        if (isNavigation && !isOfflineResource) {
+            // Navigazione offline -> prova index.html
+            const cachedIndex = await cache.match(cacheKeyForNav);
+            if (cachedIndex) return cachedIndex;
+        }
+
+        // Altrimenti prova a recuperare la risorsa richiesta dalla cache
+        const cached = await cache.match(req);
+        if (cached) return cached;
+
+        // Ultimo fallback: una Response generica o un 504
+        return new Response('Offline e risorsa non in cache.', { status: 504, statusText: 'Gateway Timeout' });
+    }
 }
 
