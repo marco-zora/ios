@@ -6,6 +6,91 @@ self.importScripts('./service-worker-assets.js');
 //self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
 //self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 
+// === CONFIG ===
+const CACHE_NAME = 'app-cache-v1'; // bump (v2, v3, ...) quando cambi struttura cache
+
+// === LIFECYCLE: install/activate ===
+self.addEventListener('install', (event) => {
+    event.waitUntil((async () => {
+        // Precache minimo per avere un fallback quando offline
+        const cache = await caches.open(CACHE_NAME);
+        try {
+            await cache.addAll(['/', '/index.html']); // adatta il path se non servito da root
+        } catch (_) { /* opzionale: ignora errori prima install */ }
+        // Attiva subito il nuovo SW
+        self.skipWaiting();
+    })());
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil((async () => {
+        // Prendi controllo dei client immediatamente
+        await self.clients.claim();
+
+        // Pulizia cache vecchie (se hai cambiato CACHE_NAME)
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : Promise.resolve())));
+    })());
+});
+
+// === FETCH: Network First per navigazioni; cache fallback ===
+self.addEventListener('fetch', (event) => {
+    const req = event.request;
+    if (req.method !== 'GET') return;
+
+    // 1) Navigazioni (apertura/refresh PWA): NETWORK FIRST su index.html
+    if (req.mode === 'navigate') {
+        event.respondWith((async () => {
+            try {
+                // Forza revalidazione contro il server per ottenere sempre la versione più recente
+                const netResp = await fetch(req, { cache: 'no-cache' });
+                const cache = await caches.open(CACHE_NAME);
+                // Aggiorna la copia di index.html per offline
+                await cache.put('/index.html', netResp.clone());
+                return netResp;
+            } catch {
+                // Offline → usa index.html in cache
+                const cache = await caches.open(CACHE_NAME);
+                const cached = await cache.match('/index.html');
+                return cached || new Response('Offline e index non in cache.', { status: 504 });
+            }
+        })());
+        return;
+    }
+
+    // 2) Asset statici e altre GET: cache se presente, altrimenti rete e poi metti in cache
+    event.respondWith((async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(req);
+        if (cached) return cached;
+
+        try {
+            const netResp = await fetch(req);
+            // Metti in cache solo risposte utili (ok o opaque)
+            if (netResp && (netResp.ok || netResp.type === 'opaque')) {
+                cache.put(req, netResp.clone());
+            }
+            return netResp;
+        } catch {
+            // Offline e non in cache
+            return new Response('Offline e risorsa non in cache.', { status: 504 });
+        }
+    })());
+});
+
+// === (Opzionale) Messaggi dal client per forzare skipWaiting ===
+self.addEventListener('message', (event) => {
+    if (event.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+
+
+
+
+
+
+
+/*
 const cacheNamePrefix = 'offline-cache-';
 const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
 const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/, /\.webmanifest$/ ];
@@ -17,7 +102,7 @@ const baseUrl = new URL(base, self.origin);
 const manifestUrlList = self.assetsManifest.assets.map(asset => new URL(asset.url, baseUrl).href);
 
 
-/*
+
 async function onInstall(event) {
     console.info('Service worker: Install');
 
@@ -55,7 +140,7 @@ async function onFetch(event) {
 
     return cachedResponse || fetch(event.request);
 }
-*/
+
 
 // Esempio: service-worker.js Network FIRST con fallback cache per navigazioni SPA (index.html) e risorse offline (manifest)
 
@@ -114,7 +199,7 @@ self.addEventListener('fetch', event => {
 
     event.respondWith(onFetchNetworkFirst(event));
 });
-*/
+
 
 self.addEventListener('install', event => {
     event.waitUntil((async () => {
@@ -134,6 +219,8 @@ self.addEventListener('activate', event => {
         self.clients.claim();
     })());
 });
+
+
 
 function fetchWithTimeout(req, ms = 5000) {
     const ctrl = new AbortController();
@@ -189,4 +276,4 @@ async function onFetchNetworkFirst(event) {
         return new Response('Offline e risorsa non in cache.', { status: 504, statusText: 'Gateway Timeout' });
     }
 }
-
+*/
