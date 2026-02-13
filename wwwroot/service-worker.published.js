@@ -71,12 +71,12 @@ self.addEventListener('fetch', event => {
         event.respondWith((async () => {
             try {
                 const networkResponse = await fetch(event.request, { cache: 'no-cache' });
-                const cache = await caches.open('offline-cache');
+                const cache = await caches.open(cacheName);
                 cache.put('index.html', networkResponse.clone());
                 return networkResponse;
             } catch {
                 // Offline: usa la versione in cache
-                const cache = await caches.open('offline-cache');
+                const cache = await caches.open(cacheName);
                 const cached = await cache.match('index.html');
                 return cached || Response.error();
             }
@@ -86,7 +86,7 @@ self.addEventListener('fetch', event => {
 
     // Per il resto puoi usare Cache First o Network First come preferisci
     event.respondWith((async () => {
-        const cache = await caches.open('offline-cache');
+        const cache = await caches.open(cacheName);
         const cached = await cache.match(event.request);
         if (cached) return cached;
 
