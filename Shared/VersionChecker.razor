@@ -69,8 +69,9 @@
     {
         // ricarica forzando il download della nuova versione
         //Nav.NavigateTo(Nav.Uri, forceLoad: true);
-        //await JS.InvokeVoidAsync("forceHardReloadAndClose");
-        await JS.InvokeVoidAsync("forceHardReload");
+
+		//se non chiudiamo la PWA non si aggiorna, quindi chiudiamo la PWA dopo aver forzato il reload
+        await JS.InvokeVoidAsync("forceHardReloadAndClose");        
     }
 
     public async ValueTask DisposeAsync()
