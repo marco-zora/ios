@@ -17,6 +17,12 @@
     
 }
 
+@if (Global.Role!="admin")
+{
+    <p class="text-danger">SORRY YOUR ARE NOT AN ADMINISTRATOR</p>
+}
+
+
 <hr />
 
 <h5>Aggiungi nuovo utente</h5>
