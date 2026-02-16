@@ -24,8 +24,40 @@
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
             </NavLink>
         </div>
+
+        <div class="nav-item px-3">
+            <NavLink class="nav-link" href="login">
+                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
+            </NavLink>
+        </div>
+
+
+
+        @if (Loaded)
+        {
+            @if (loggedRole == "admin")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="admin">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Administrator
+                    </NavLink>
+                </div>
+            }
+            else if (loggedRole == "user")
+            {
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="user">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> @loggedUser
+                    </NavLink>
+                </div>
+            }
+        }
+
+
     </nav>
 </div>
+
+
 
 @code {
     private bool collapseNavMenu = true;
@@ -35,5 +67,20 @@
     private void ToggleNavMenu()
     {
         collapseNavMenu = !collapseNavMenu;
+    }
+}
+
+@code {
+    private string? loggedRole;
+    private string? loggedUser;
+
+    private bool Loaded = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        loggedRole = await Global.LoggedRole();
+        loggedUser = await Global.LoggedUser();
+
+        Loaded = true;
     }
 }

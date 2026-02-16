@@ -1,0 +1,233 @@
+﻿@page "/admin"
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+@inject HttpClient Http
+
+<h3>Gestione utenti</h3>
+
+@if (!Loaded)
+{
+    <p>Caricamento utenti...</p>
+    return;
+}
+
+@if (!string.IsNullOrEmpty(Error))
+{
+    <p class="text-danger">@Error</p>
+    
+}
+
+<hr />
+
+<h5>Aggiungi nuovo utente</h5>
+
+<div class="row g-2" style="max-width: 700px;">
+    <div class="col-4">
+        <input class="form-control" placeholder="Name" @bind="NewName" />
+    </div>
+    <div class="col">
+        <input class="form-control" placeholder="Username" @bind="NewUser" />
+    </div>
+    <div class="col">
+        <input class="form-control" placeholder="Password" type="password" @bind="NewPass" />
+    </div>
+    <div class="col">
+        <select class="form-select" @bind="NewRole">
+            <option value="name">name</option>
+            <option value="user">user</option>
+            <option value="admin">admin</option>
+        </select>
+    </div>
+    <div class="col-auto">
+        <button class="btn btn-success" @onclick="AddUser">Aggiungi</button>
+    </div>
+</div>
+
+<hr />
+
+<div style="max-height: 600px; overflow-y: auto;">
+    <table class="table table-striped table-hover">
+    <!--    <table class="table table-striped"> -->
+        <thead class="table-light sticky-header">
+                <tr>
+                <th>ID</th>
+                <th>Nome</th>
+                <th>User</th>
+                <th>Ruolo</th>
+                <th class="text-end"> Azioni </th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var u in Users.OrderBy(u => u.name))
+            {
+                <tr>
+                    <td>@u.Id</td>
+                    <td>@u.name</td>
+                    <td>@u.user</td>                    
+                    <td>@u.role</td>
+                    <td class="text-end">
+
+                         <!-- Pulsante Impianti -->
+                        <button class="btn btn-info btn-sm me-1"
+                                @onclick="() => OpenImpianti(u.user)"> 
+                            Impianti
+                        </button>
+
+                        <!-- Pulsante Rinomina -->
+                        <button class="btn btn-warning btn-sm me-1"
+                                @onclick="() => RenameUser(u.user)">
+                            Rinomina
+                        </button>
+
+                        <!-- Pulsante Elimina -->
+                        <button class="btn btn-danger btn-sm"
+                                @onclick="() => DeleteUser(u.user)">
+                            Elimina
+                        </button>
+                        
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+</div>
+
+
+
+
+    
+
+@code {
+
+    private List<UserRecord>? Users;
+    private bool Loaded = false;
+    private string? Error;
+
+    private string? NewName;
+    private string? NewUser;
+    private string? NewPass;
+    private string NewRole = "user";
+
+    protected override async Task OnInitializedAsync()
+    {  
+        Users = await Global.GetUsers();
+        Error = Global.Error;
+        /*
+        try
+        {
+            Users = await Http.GetFromJsonAsync<List<UserRecord>>(Global.ProxyBase + Global.UsersFileName);
+            Loaded = true;
+        }       
+        catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
+        {
+            // Caso: file inesistente
+            Error = "Il file utenti non esiste. Creare manualmente almeno un account amministratore.";
+            Users = null;
+        }
+        catch (HttpRequestException ex) when (ex.StatusCode == null)
+        {
+            // Caso: rete non disponibile, DNS, proxy, timeout
+            Error = "Errore di rete: impossibile raggiungere il server.";
+            Users = null;
+        }
+        */
+        Loaded = true;
+    }       
+
+    private async Task AddUser()
+    {
+        if (string.IsNullOrWhiteSpace(NewUser) || string.IsNullOrWhiteSpace(NewPass))
+        {
+            Error = "Inserisci username e password.";
+            return;
+        }
+
+        Users ??= new();
+
+        if (Users.Any(u => u.user == NewUser))
+        {
+            Error = "User Name \""+ NewUser + "\" già esistente. User Name deve essere Unico.";
+            return;
+        }
+
+        Users.Add(new UserRecord
+        {
+            Id =  (Users.Count == 0) ? 0 : Users.Max(u => u.Id) + 1,
+            name = NewName.Trim(),
+            user = NewUser.Trim(),
+            hash = Global.Sha256(NewPass.Trim()),
+            role = NewRole
+        });
+
+        NewName = "";
+        NewUser = "";
+        NewPass = "";
+        NewRole = "user";
+
+        await SaveUsers();
+    }
+
+    private async Task DeleteUser(string username)
+    {
+        if (Users is null) return;
+        var u = Users.FirstOrDefault(x => x.user == username);
+        if (u is not null) Users.Remove(u);
+
+        await SaveUsers();
+    }
+
+    @inject IJSRuntime JS
+
+    @code {
+        private async Task RenameUser(string username)
+        {
+            // Trova l'utente cercando per USERNAME
+            var u = Users?.FirstOrDefault(x => x.user == username);
+
+            if (u is null) return;
+
+            // Chiedi il nuovo nome (usa il nome attuale come default)
+            var newName = await JS.InvokeAsync<string?>("prompt", $"Rinomina utente \"{u.name}\" in:", u.name);
+
+            // prompt annullata o vuota: non fare nulla
+            if (string.IsNullOrWhiteSpace(newName) || newName == u.name)  return;
+
+            // Aggiorna il modello in memoria
+            u.name = newName;
+            
+            SaveUsers();
+
+            // Se il tuo table è ordinato per nome, non serve altro: al prossimo render si vedrà
+            // Forza un render immediato (opzionale)
+            StateHasChanged();
+        }
+}
+    private async Task OpenImpianti(string username)
+        {
+            Nav.NavigateTo($"/impianti/{username}");
+        }
+
+    private async Task SaveUsers()
+    {
+        try
+        {
+            Error = null;
+            Users ??= new();
+
+            var json = System.Text.Json.JsonSerializer.Serialize(
+                Users,
+                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+            );
+
+            using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+            var res = await Http.PutAsync(Global.ProxyBase + Global.UsersFileName, content);
+
+            if (!res.IsSuccessStatusCode) Error = $"Errore salvataggio: {res.StatusCode}";
+            //else  await JS.InvokeVoidAsync("alert", "Utenti salvati con successo!");
+        }
+        catch (Exception ex)
+        {
+            Error = "Errore: " + ex.Message;
+        }
+    }
+}

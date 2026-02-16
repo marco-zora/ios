@@ -1,0 +1,110 @@
+﻿@page "/login"
+@inject HttpClient Http
+@inject NavigationManager Nav
+
+
+@if (!Loaded)
+{
+    <p>Caricamento utenti...</p>
+    return;
+}
+
+@if (!string.IsNullOrEmpty(Error))
+{
+    <p class="text-danger">@Error</p>
+}
+else
+{
+    <h3>Accesso</h3>
+
+    <div class="card p-3 mb-3" style="max-width: 350px;">
+        <input class="form-control mb-2" placeholder="Username" @bind="LoginUser" />
+        <input class="form-control mb-3" type="password" placeholder="Password" @bind="LoginPass" />
+        <button class="btn btn-primary w-100" @onclick="VerifyLogin">Entra</button>
+    </div>
+}
+
+
+@switch(loggedRole)
+{
+    case "admin":
+        <h2>Benvenuto Amministratore @loggedUser</h2>
+
+        break;
+        
+    case "user":
+        <h2>Benvenuto User @loggedUser</h2>
+        break;
+
+    default:
+        break;
+}
+
+
+
+@code {
+    private bool Loaded = false;
+    private List<UserRecord>? Users;
+
+    // variabili collegate al form HTML
+    private string? LoginUser;
+    private string? LoginPass;
+    private string? Error;
+    private string? loggedRole;
+    private string? loggedUser;
+
+    /// <summary>
+    /// ala fine del metodo lifecycle viene rigenerato un rendering della pagina
+    /// </summary>
+    /// <returns></returns>
+    protected override async Task OnInitializedAsync()
+    {        
+        Users = await Global.GetUsers();
+
+        Error = Global.Error;
+
+        if (Users is null)  // se non ci sono users nel file json
+        {
+            Error = "Impossibile leggere utenti.";
+            return;
+        }
+               
+        Nav.NavigateTo("admin", forceLoad: true);
+
+        Loaded = true;
+        }
+
+
+        private async Task VerifyLogin()
+        {
+            
+            if (string.IsNullOrWhiteSpace(LoginUser) || string.IsNullOrWhiteSpace(LoginPass))   // se le credenziali non sono state inserite correttamente
+            {
+                Error = "Inserisci username e password.";
+                return;
+            }
+
+            var hash = Global.Sha256(LoginPass);
+
+            var match = Users.FirstOrDefault(u => u.user == LoginUser && u.hash == hash);
+
+            if (match is null)  // se le credenziali non corrispondono a nessun user nel file json
+            {
+                Error = "Credenziali non valide.";
+                return;
+            }
+
+            await Global.LoggedUser(match.user);
+            await Global.LoggedRole(match.role);
+
+            loggedRole = match.role;
+            loggedUser = match.user;
+                   
+            // aggiorna questa pagina e quindi anche il MENU!
+            if(match.role=="admin") Nav.NavigateTo("admin", forceLoad: true);            
+            else Nav.NavigateTo("login", forceLoad: true);
+        }
+
+    
+}
+
