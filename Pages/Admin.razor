@@ -14,12 +14,13 @@
 @if (!string.IsNullOrEmpty(Error))
 {
     <p class="text-danger">@Error</p>
-    
+	return;
 }
 
 @if (Global.Role!="admin")
 {
     <p class="text-danger">SORRY YOUR ARE NOT AN ADMINISTRATOR</p>
+    return;
 }
 
 
