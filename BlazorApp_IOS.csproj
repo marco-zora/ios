@@ -9,10 +9,6 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Compile Remove="Shared\UsersModel.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
     <Content Remove="Shared\VersionChecker.razor" />
   </ItemGroup>
 
@@ -23,8 +19,11 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" /> -->
-    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.js" />
+    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Shared\" />
   </ItemGroup>
 
 </Project>

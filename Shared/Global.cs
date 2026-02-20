@@ -51,7 +51,7 @@ namespace BlazorApp_IOS.Shared
                 Error = "Errore di rete: impossibile raggiungere il server.";
                 Users = null;
             }
-            catch (HttpRequestException ex)
+            catch (HttpRequestException)
             {
                 // Errori di rete/HTTP (5xx, 4xx, DNS, ecc.)
                 Users = null;
@@ -63,12 +63,12 @@ namespace BlazorApp_IOS.Shared
                 Error = "Errore Timeout o cancellazione manuale.";
                 Users = null;
             }           
-            catch (NotSupportedException ex)
+            catch (NotSupportedException)
             {
                 // Content-Type non JSON o formati non supportati
                 Users = null;
             }
-            catch (JsonException ex)
+            catch (JsonException)
             {
                 // JSON malformato o non coerente con UserRecord
                 Users = null;
