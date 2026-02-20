@@ -29,7 +29,6 @@ else
 {
     case "admin":
         <h2>Benvenuto Amministratore @loggedUser</h2>
-
         break;
         
     case "user":
@@ -101,8 +100,8 @@ else
             loggedUser = match.user;
                    
             // aggiorna questa pagina e quindi anche il MENU!
-            if(match.role=="admin") Nav.NavigateTo("admin", forceLoad: true);            
-            else Nav.NavigateTo("login", forceLoad: true);
+            //if(match.role=="admin") Nav.NavigateTo("admin", forceLoad: true);            
+            //else Nav.NavigateTo("login", forceLoad: true);
         }
 
     
