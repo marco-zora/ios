@@ -1,0 +1,280 @@
+/* Manifest version: M8o3HT5t */
+// Caution! Be sure you understand the caveats before publishing an application with
+// offline support. See https://aka.ms/blazor-offline-considerations
+
+self.importScripts('./service-worker-assets.js');
+//self.addEventListener('install', event => event.waitUntil(onInstall(event)));
+//self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
+//self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
+
+// === CONFIG ===
+const CACHE_NAME = 'app-cache-v1'; // bump (v2, v3, ...) quando cambi struttura cache
+
+// === LIFECYCLE: install/activate ===
+self.addEventListener('install', (event) => {
+    event.waitUntil((async () => {
+        // Precache minimo per avere un fallback quando offline
+        const cache = await caches.open(CACHE_NAME);
+        try {
+            await cache.addAll(['/', '/index.html']); // adatta il path se non servito da root
+        } catch (_) { /* opzionale: ignora errori prima install */ }
+        // Attiva subito il nuovo SW
+        self.skipWaiting();
+    })());
+});
+
+self.addEventListener('activate', (event) => {
+    event.waitUntil((async () => {
+        // Prendi controllo dei client immediatamente
+        await self.clients.claim();
+
+        // Pulizia cache vecchie (se hai cambiato CACHE_NAME)
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : Promise.resolve())));
+    })());
+});
+
+// === FETCH: Network First per navigazioni; cache fallback ===
+self.addEventListener('fetch', (event) => {
+    const req = event.request;
+    if (req.method !== 'GET') return;
+
+    // 1) Navigazioni (apertura/refresh PWA): NETWORK FIRST su index.html
+    if (req.mode === 'navigate') {
+        event.respondWith((async () => {
+            try {
+                // Forza revalidazione contro il server per ottenere sempre la versione più recente
+                const netResp = await fetch(req, { cache: 'no-cache' });
+                const cache = await caches.open(CACHE_NAME);
+                // Aggiorna la copia di index.html per offline
+                await cache.put('/index.html', netResp.clone());
+                return netResp;
+            } catch {
+                // Offline → usa index.html in cache
+                const cache = await caches.open(CACHE_NAME);
+                const cached = await cache.match('/index.html');
+                return cached || new Response('Offline e index non in cache.', { status: 504 });
+            }
+        })());
+        return;
+    }
+
+    // 2) Asset statici e altre GET: cache se presente, altrimenti rete e poi metti in cache
+    event.respondWith((async () => {
+        const cache = await caches.open(CACHE_NAME);
+        const cached = await cache.match(req);
+        if (cached) return cached;
+
+        try {
+            const netResp = await fetch(req);
+            // Metti in cache solo risposte utili (ok o opaque)
+            if (netResp && (netResp.ok || netResp.type === 'opaque')) {
+                cache.put(req, netResp.clone());
+            }
+            return netResp;
+        } catch {
+            // Offline e non in cache
+            return new Response('Offline e risorsa non in cache.', { status: 504 });
+        }
+    })());
+});
+
+// === (Opzionale) Messaggi dal client per forzare skipWaiting ===
+self.addEventListener('message', (event) => {
+    if (event.data === 'SKIP_WAITING') self.skipWaiting();
+});
+
+
+
+
+
+
+
+
+/*
+const cacheNamePrefix = 'offline-cache-';
+const cacheName = `${cacheNamePrefix}${self.assetsManifest.version}`;
+const offlineAssetsInclude = [ /\.dll$/, /\.pdb$/, /\.wasm/, /\.html/, /\.js$/, /\.json$/, /\.css$/, /\.woff$/, /\.png$/, /\.jpe?g$/, /\.gif$/, /\.ico$/, /\.blat$/, /\.dat$/, /\.webmanifest$/ ];
+const offlineAssetsExclude = [ /^service-worker\.js$/ ];
+
+// Replace with your base path if you are hosting on a subfolder. Ensure there is a trailing '/'.
+const base = "/";
+const baseUrl = new URL(base, self.origin);
+const manifestUrlList = self.assetsManifest.assets.map(asset => new URL(asset.url, baseUrl).href);
+
+
+
+async function onInstall(event) {
+    console.info('Service worker: Install');
+
+    // Fetch and cache all matching items from the assets manifest
+    const assetsRequests = self.assetsManifest.assets
+        .filter(asset => offlineAssetsInclude.some(pattern => pattern.test(asset.url)))
+        .filter(asset => !offlineAssetsExclude.some(pattern => pattern.test(asset.url)))
+        .map(asset => new Request(asset.url, { integrity: asset.hash, cache: 'no-cache' }));
+    await caches.open(cacheName).then(cache => cache.addAll(assetsRequests));
+}
+
+async function onActivate(event) {
+    console.info('Service worker: Activate');
+
+    // Delete unused caches
+    const cacheKeys = await caches.keys();
+    await Promise.all(cacheKeys
+        .filter(key => key.startsWith(cacheNamePrefix) && key !== cacheName)
+        .map(key => caches.delete(key)));
+}
+
+async function onFetch(event) {
+    let cachedResponse = null;
+    if (event.request.method === 'GET') {
+        // For all navigation requests, try to serve index.html from cache,
+        // unless that request is for an offline resource.
+        // If you need some URLs to be server-rendered, edit the following check to exclude those URLs
+        const shouldServeIndexHtml = event.request.mode === 'navigate'
+            && !manifestUrlList.some(url => url === event.request.url);
+
+        const request = shouldServeIndexHtml ? 'index.html' : event.request;
+        const cache = await caches.open(cacheName);
+        cachedResponse = await cache.match(request);
+    }
+
+    return cachedResponse || fetch(event.request);
+}
+
+
+// Esempio: service-worker.js Network FIRST con fallback cache per navigazioni SPA (index.html) e risorse offline (manifest)
+
+// const cacheName = 'app-cache-v1';
+// manifestUrlList: array di asset precache (iniezione build Blazor)
+// Esempio: const manifestUrlList = self.assetsManifest?.assets?.map(a => new URL(a.url, self.location).href) ?? [];
+
+
+
+self.addEventListener('fetch', event => {
+    if (event.request.mode === 'navigate') {
+        // Network-first per index.html e navigazioni
+        event.respondWith((async () => {
+            try {
+                const networkResponse = await fetch(event.request, { cache: 'no-cache' });
+                const cache = await caches.open(cacheName);
+                cache.put('index.html', networkResponse.clone());
+                return networkResponse;
+            } catch {
+                // Offline: usa la versione in cache
+                const cache = await caches.open(cacheName);
+                const cached = await cache.match('index.html');
+                return cached || Response.error();
+            }
+        })());
+        return;
+    }
+
+    // Per il resto puoi usare Cache First o Network First come preferisci
+    event.respondWith((async () => {
+        const cache = await caches.open(cacheName);
+        const cached = await cache.match(event.request);
+        if (cached) return cached;
+
+        try {
+            const networkResponse = await fetch(event.request);
+            cache.put(event.request, networkResponse.clone());
+            return networkResponse;
+        } catch {
+            return cached || Response.error();
+        }
+    })());
+});
+
+
+
+
+
+
+/*
+self.addEventListener('fetch', event => {
+    // Gestiamo solo richieste GET; per il resto lasciamo passare
+    if (event.request.method !== 'GET') {
+        return;
+    }
+
+    event.respondWith(onFetchNetworkFirst(event));
+});
+
+
+self.addEventListener('install', event => {
+    event.waitUntil((async () => {
+        const cache = await caches.open(cacheName);
+        // Esempio: precache index e asset manifest
+        const toPrecache = ['index.html', ...(manifestUrlList || [])];
+        await cache.addAll(toPrecache);
+        self.skipWaiting();
+    })());
+});
+
+self.addEventListener('activate', event => {
+    event.waitUntil((async () => {
+        // opzionale: pulizia cache vecchie
+        const keys = await caches.keys();
+        await Promise.all(keys.map(k => (k !== cacheName ? caches.delete(k) : Promise.resolve())));
+        self.clients.claim();
+    })());
+});
+
+
+
+function fetchWithTimeout(req, ms = 5000) {
+    const ctrl = new AbortController();
+    const t = setTimeout(() => ctrl.abort(), ms);
+    return fetch(req, { signal: ctrl.signal }).finally(() => clearTimeout(t));
+}
+// poi usa fetchWithTimeout(req) al posto di fetch(req)
+
+
+async function onFetchNetworkFirst(event) {
+    const req = event.request;
+
+    // Rileva le navigazioni (SPA) che NON puntano a risorse del manifest
+    const isNavigation = req.mode === 'navigate';
+    const isOfflineResource = manifestUrlList?.some(url => url === req.url) === true;
+
+    // Per le navigazioni, la risorsa "logica" da usare come fallback cache è index.html
+    const cacheKeyForNav = 'index.html';
+
+    try {
+        // 1) Prova la rete prima di tutto
+        const networkResponse = await fetch(req);
+
+        // 2) Se risposta ok/opaque: metti in cache (solo GET)
+        if (networkResponse && (networkResponse.ok || networkResponse.type === 'opaque')) {
+            // Apri cache e clona risposta
+            const cache = await caches.open(cacheName);
+            // Per le navigazioni, ha senso mettere in cache anche index.html
+            if (isNavigation && !isOfflineResource) {
+                cache.put(cacheKeyForNav, networkResponse.clone());
+            } else {
+                cache.put(req, networkResponse.clone());
+            }
+        }
+
+        // 3) Ritorna sempre la risposta di rete (Network First)
+        return networkResponse;
+    } catch (err) {
+        // 4) Se la rete fallisce, fallback sulla cache
+        const cache = await caches.open(cacheName);
+
+        if (isNavigation && !isOfflineResource) {
+            // Navigazione offline -> prova index.html
+            const cachedIndex = await cache.match(cacheKeyForNav);
+            if (cachedIndex) return cachedIndex;
+        }
+
+        // Altrimenti prova a recuperare la risorsa richiesta dalla cache
+        const cached = await cache.match(req);
+        if (cached) return cached;
+
+        // Ultimo fallback: una Response generica o un 504
+        return new Response('Offline e risorsa non in cache.', { status: 504, statusText: 'Gateway Timeout' });
+    }
+}
+*/
