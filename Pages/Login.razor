@@ -3,6 +3,13 @@
 @inject NavigationManager Nav
 
 
+
+@if (!string.IsNullOrWhiteSpace(Global.Error))
+{
+    <div class="alert alert-danger">@Global.Error</div>
+}
+
+
 @if (!Loaded)
 {
     <p>Caricamento utenti...</p>

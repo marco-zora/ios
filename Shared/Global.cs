@@ -51,6 +51,7 @@ namespace BlazorApp_IOS.Shared
                 Error = "Errore di rete: impossibile raggiungere il server.";
                 Users = null;
             }
+            /*
             catch (HttpRequestException)
             {
                 // Errori di rete/HTTP (5xx, 4xx, DNS, ecc.)
@@ -73,14 +74,14 @@ namespace BlazorApp_IOS.Shared
                 // JSON malformato o non coerente con UserRecord
                 Users = null;
             }
-
+            */
             catch (Exception ex)
             {
                 // Caso: rete non disponibile, DNS, proxy, timeout
                 Error = ex.Message;
                 Users = null;
             }
-
+            
             return Users;
         }
 
