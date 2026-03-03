@@ -1,4 +1,34 @@
 /* =========================================================
+   Blazor loading (Apple‑style)
+   ========================================================= */
+
+.loading-progress {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: #ffffff;
+    z-index: 9999;
+}
+
+.loading-progress svg {
+    width: 56px;
+    height: 56px;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: rgba(0, 0, 0, 0.15);
+    stroke-width: 4;
+}
+
+.loading-progress circle:last-child {
+    stroke: rgba(0, 122, 255, 0.7); /* Apple system blue */
+}
+
+/* =========================================================
    Apple System Colors + Theme
    ========================================================= */
 
