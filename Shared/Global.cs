@@ -28,6 +28,7 @@ namespace BlazorApp_IOS.Shared
         public string ?Error;
 
         private readonly IJSRuntime JS;
+        
 
         public GlobalService(HttpClient http, IJSRuntime js) { Http = http; JS = js; Error = null; }
 
@@ -36,48 +37,41 @@ namespace BlazorApp_IOS.Shared
             try
             {
                 using var cts = new CancellationTokenSource(TimeSpan.FromSeconds(5)); // timeout desiderato
-                Users = await Http.GetFromJsonAsync<List<UserRecord>>( ProxyBase + UsersFileName, cancellationToken: cts.Token );          
-                
+
+                Users = await Http.GetFromJsonAsync<List<UserRecord>>( ProxyBase + UsersFileName, cancellationToken: cts.Token );                          
             }
             catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
-                // Caso: file inesistente
                 Error = "Il file utenti non esiste. Creare manualmente almeno un account amministratore.";
                 Users = null;
             }
             catch (HttpRequestException ex) when (ex.StatusCode == null)
             {
-                // Caso: rete non disponibile, DNS, proxy, timeout
                 Error = "Errore di rete: impossibile raggiungere il server.";
                 Users = null;
-            }
-            /*
+            }            
             catch (HttpRequestException)
             {
-                // Errori di rete/HTTP (5xx, 4xx, DNS, ecc.)
+                Error = "Errori di rete/HTTP (5xx, 4xx, DNS, ecc.)";
                 Users = null;
             }
             catch (OperationCanceledException)
-            {
-                // Timeout o cancellazione manuale
-                // Mostra un messaggio all’utente / fai logging
+            {                                
                 Error = "Errore Timeout o cancellazione manuale.";
                 Users = null;
             }           
             catch (NotSupportedException)
             {
-                // Content-Type non JSON o formati non supportati
+                Error = "Content-Type non JSON o formati non supportati";
                 Users = null;
             }
             catch (JsonException)
             {
-                // JSON malformato o non coerente con UserRecord
+                Error = "JSON malformato o non coerente con UserRecord";
                 Users = null;
-            }
-            */
+            }            
             catch (Exception ex)
             {
-                // Caso: rete non disponibile, DNS, proxy, timeout
                 Error = ex.Message;
                 Users = null;
             }
@@ -94,7 +88,7 @@ namespace BlazorApp_IOS.Shared
             catch (HttpRequestException ex) when (ex.StatusCode == System.Net.HttpStatusCode.NotFound)
             {
                 // Caso: file inesistente
-                Error = "Il file utenti non esiste. Creare manualmente almeno un account amministratore.";
+                Error = "Il file Impianti non esiste.";
                 Impianti = null;
             }
             catch (HttpRequestException ex) when (ex.StatusCode == null)
@@ -106,6 +100,7 @@ namespace BlazorApp_IOS.Shared
 
             return Impianti;
         }
+        
         public async Task<string?> LoggedUser() 
         {            
             return  User = await JS.InvokeAsync<string>("sessionStorage.getItem", "loggedUser");
@@ -115,20 +110,28 @@ namespace BlazorApp_IOS.Shared
             return Role = await JS.InvokeAsync<string>("sessionStorage.getItem", "loggedRole");
         }
 
-        /// <summary>
-        /// memoria del browser
-        /// </summary>
-        /// <param name="user"></param>
-        /// <returns></returns>
+        public event Action? AuthChanged;
+
         public async Task LoggedUser(string user)
         {
             await JS.InvokeVoidAsync("sessionStorage.setItem", "loggedUser", user);
             User = user;
+            AuthChanged?.Invoke();
         }
         public async Task LoggedRole(string role)
         {
             await JS.InvokeVoidAsync("sessionStorage.setItem", "loggedRole", role);
             Role = role;
+            AuthChanged?.Invoke();
+        }
+
+        public async Task Logout()
+        {
+            await JS.InvokeVoidAsync("sessionStorage.removeItem", "loggedUser");
+            await JS.InvokeVoidAsync("sessionStorage.removeItem", "loggedRole");
+            User = "";
+            Role = "";
+            AuthChanged?.Invoke();
         }
 
         public string Sha256(string input)

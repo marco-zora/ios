@@ -1,46 +1,133 @@
-﻿<div class="top-row ps-3 navbar navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand" href="">BlazorApp_IOS</a>
-        <button title="Navigation menu" class="navbar-toggler" @onclick="ToggleNavMenu">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-    </div>
-</div>
+﻿@inject NavigationManager Nav
+@inject BlazorApp_IOS.Shared.GlobalService Global
+@implements IDisposable
 
-<div class="@NavMenuCssClass nav-scrollable" @onclick="ToggleNavMenu">
-    <nav class="nav flex-column">
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
-                <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="counter">
-                <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
-            </NavLink>
-        </div>
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="weather">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
-            </NavLink>
-        </div>
-
-
+<div class="nav-menu px-3 py-2">
+    @if (!IsLoggedIn)
+    {
         <div class="nav-item px-3">
             <NavLink class="nav-link" href="login">
                 <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
             </NavLink>
         </div>
-    </nav>
+    }
+    else
+    {
+        <div class="text-muted mb-2">
+            Utente: @LoggedUser
+            @if (IsAdmin)
+            {
+                <span>(admin)</span>
+            }
+        </div>
+
+        @if (IsAdmin)
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="clienti">Clienti</NavLink>
+            </div>
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="impianti">Impianti</NavLink>
+            </div>
+        }
+        else
+        {
+            <div class="nav-item px-3">
+                <NavLink class="nav-link" href="impianti">I miei impianti</NavLink>
+            </div>
+        }
+
+
+        /*
+        <div class="nav-item px-3">
+            <a class="nav-link"
+               href="#"
+               @onclick="Logout"
+               @onclick:preventDefault="true"
+               @onclick:stopPropagation="true">
+                <span class="bi bi-box-arrow-right nav-icon" ></span>
+                Logout
+            </a>
+        </div>
+        
+        <div class="nav-item px-3">
+            <a class="nav-link"
+               href="#"
+               @onclick="Logout"
+               @onclick:preventDefault="true"
+               @onclick:stopPropagation="true">
+                <svg class="nav-icon" viewBox="0 0 16 16" aria-hidden="true">
+                    <path d="M6.146 11.854a.5.5 0 0 1 0-.708L8.293 9H1.5a.5.5 0 0 1 0-1h6.793L6.146 5.854a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0z"/>
+                    <path d="M13.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-.5.5H10a.5.5 0 0 1 0-1h3V2h-3a.5.5 0 0 1 0-1h3.5z"/>
+                </svg>
+                <span>Logout</span>
+            </a>
+        </div>
+        */
+         <div class="nav-item px-3">
+            <a class="nav-link logout"
+               href="#"
+               @onclick="Logout"
+               @onclick:preventDefault="true"
+               @onclick:stopPropagation="true">
+
+                  <svg class="logout-icon"
+                     width="20"
+                     height="20"
+                     viewBox="0 0 24 24"
+                     fill="none"
+                     stroke="currentColor"
+                     stroke-width="1.5"
+                     stroke-linecap="round"
+                     stroke-linejoin="round"
+                     style="flex-shrink:0">
+                    <path d="M15 3h2a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4h-2" />
+                    <path d="M10 17l5-5-5-5" />
+                    <path d="M15 12H3" />
+                </svg>
+            <span>Logout</span>
+            </a>
+        </div>
+
+    }
 </div>
 
 @code {
-    private bool collapseNavMenu = true;
+    private string? LoggedUser;
+    private string? LoggedRole;
 
-    private string? NavMenuCssClass => collapseNavMenu ? "collapse" : null;
+    private bool IsLoggedIn => !string.IsNullOrWhiteSpace(LoggedUser);
+    private bool IsAdmin => string.Equals(LoggedRole, "admin", StringComparison.OrdinalIgnoreCase);
 
-    private void ToggleNavMenu()
+    protected override async Task OnInitializedAsync()
     {
-        collapseNavMenu = !collapseNavMenu;
+        Global.AuthChanged += OnAuthChanged;
+
+        // stato iniziale (se l'utente era già loggato)
+        await RefreshAuthStateAsync();
+    }
+
+    private async Task RefreshAuthStateAsync()
+    {
+        LoggedUser = await Global.LoggedUser();
+        LoggedRole = await Global.LoggedRole();
+    }
+
+    private async void OnAuthChanged()
+    {
+        // IMPORTANTISSIMO: rileggere prima user/role, poi ridisegnare
+        await RefreshAuthStateAsync();
+        await InvokeAsync(StateHasChanged);
+    }
+
+    private async Task Logout()
+    {
+        await Global.Logout();
+        Nav.NavigateTo("\\", forceLoad: true);  // ritorna alla pagina Home
+    }
+
+    public void Dispose()
+    {
+        Global.AuthChanged -= OnAuthChanged;
     }
 }
