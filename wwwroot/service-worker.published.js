@@ -2,21 +2,28 @@
 // offline support. See https://aka.ms/blazor-offline-considerations
 
 self.importScripts('./service-worker-assets.js');
-//self.addEventListener('install', event => event.waitUntil(onInstall(event)));
-//self.addEventListener('activate', event => event.waitUntil(onActivate(event)));
-//self.addEventListener('fetch', event => event.respondWith(onFetch(event)));
 
 // === CONFIG ===
-const CACHE_NAME = 'app-cache-v1'; // bump (v2, v3, ...) quando cambi struttura cache
+// Bump (v2, v3, ...) quando cambi struttura cache o fix importanti
+const CACHE_NAME = 'app-cache-v2';
+
+// Calcola automaticamente lo scope (es. "https://marco-zora.github.io/ios/")
+const SCOPE_URL = new URL(self.registration.scope);
+const SCOPE_PATH = SCOPE_URL.pathname.replace(/\/?$/, '/'); // "/ios/"
+const INDEX_PATH = SCOPE_PATH + 'index.html';               // "/ios/index.html"
 
 // === LIFECYCLE: install/activate ===
 self.addEventListener('install', (event) => {
     event.waitUntil((async () => {
-        // Precache minimo per avere un fallback quando offline
         const cache = await caches.open(CACHE_NAME);
+
         try {
-            await cache.addAll(['/', '/index.html']); // adatta il path se non servito da root
-        } catch (_) { /* opzionale: ignora errori prima install */ }
+            // Precache minimo: root dello scope e index.html dello scope
+            await cache.addAll([SCOPE_PATH, INDEX_PATH]);
+        } catch (_) {
+            /* opzionale: ignora errori prima install */
+        }
+
         // Attiva subito il nuovo SW
         self.skipWaiting();
     })());
@@ -27,7 +34,7 @@ self.addEventListener('activate', (event) => {
         // Prendi controllo dei client immediatamente
         await self.clients.claim();
 
-        // Pulizia cache vecchie (se hai cambiato CACHE_NAME)
+        // Pulizia cache vecchie
         const keys = await caches.keys();
         await Promise.all(keys.map(k => (k !== CACHE_NAME ? caches.delete(k) : Promise.resolve())));
     })());
@@ -38,20 +45,21 @@ self.addEventListener('fetch', (event) => {
     const req = event.request;
     if (req.method !== 'GET') return;
 
-    // 1) Navigazioni (apertura/refresh PWA): NETWORK FIRST su index.html
+    // 1) Navigazioni (apertura/refresh PWA): NETWORK FIRST su index.html dello scope
     if (req.mode === 'navigate') {
         event.respondWith((async () => {
             try {
                 // Forza revalidazione contro il server per ottenere sempre la versione più recente
                 const netResp = await fetch(req, { cache: 'no-cache' });
                 const cache = await caches.open(CACHE_NAME);
-                // Aggiorna la copia di index.html per offline
-                await cache.put('/index.html', netResp.clone());
+
+                // Aggiorna la copia di index.html per offline (path corretto: /ios/index.html)
+                await cache.put(INDEX_PATH, netResp.clone());
                 return netResp;
             } catch {
                 // Offline → usa index.html in cache
                 const cache = await caches.open(CACHE_NAME);
-                const cached = await cache.match('/index.html');
+                const cached = await cache.match(INDEX_PATH);
                 return cached || new Response('Offline e index non in cache.', { status: 504 });
             }
         })());
@@ -72,7 +80,6 @@ self.addEventListener('fetch', (event) => {
             }
             return netResp;
         } catch {
-            // Offline e non in cache
             return new Response('Offline e risorsa non in cache.', { status: 504 });
         }
     })());
@@ -82,8 +89,6 @@ self.addEventListener('fetch', (event) => {
 self.addEventListener('message', (event) => {
     if (event.data === 'SKIP_WAITING') self.skipWaiting();
 });
-
-
 
 
 
