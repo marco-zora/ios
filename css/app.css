@@ -1,0 +1,157 @@
+/* =========================================================
+   Blazor loading (Apple‑style)
+   ========================================================= */
+
+.loading-progress {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    background: #ffffff;
+    z-index: 9999;
+}
+
+.loading-progress svg {
+    width: 56px;
+    height: 56px;
+}
+
+.loading-progress circle {
+    fill: none;
+    stroke: rgba(0, 0, 0, 0.15);
+    stroke-width: 4;
+}
+
+.loading-progress circle:last-child {
+    stroke: rgba(0, 122, 255, 0.7); /* Apple system blue */
+}
+
+/* =========================================================
+   Apple System Colors + Theme
+   ========================================================= */
+
+:root {
+    /* Apple system colors */
+    --system-blue: #007aff;
+    --system-red: #ff3b30;
+    /* Light mode */
+    --label-primary: #000000;
+    --label-secondary: #3c3c4399;
+
+}
+
+/* Dark mode */
+body.dark {
+    --label-primary: #ffffff;
+    --label-secondary: #ebebf599;
+}
+
+/* =========================================================
+   Base layout
+   ========================================================= */
+
+html, body {
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Helvetica Neue", Helvetica, Arial, sans-serif;
+    color: var(--label-primary);
+    background: #ffffff; /* TORNA BIANCO */
+}
+
+
+
+/* =========================================================
+   Contenuto principale: testo visibile su sfondo bianco
+   ========================================================= */
+
+main {
+    color: #1c1c1e; /* Apple label su bianco */
+    background: #ffffff;
+}
+
+
+
+/* =========================================================
+   Navigation / Sidebar
+   ========================================================= */
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    color: var(--label-primary);
+    text-decoration: none;
+}
+
+    .nav-link.secondary {
+        color: var(--label-secondary);
+    }
+
+/* =========================================================
+   SVG Icons (Apple‑like)
+   ========================================================= */
+
+.nav-icon,
+.logout-icon {
+    width: 20px;
+    height: 20px;
+    flex-shrink: 0;
+    color: currentColor;
+}
+
+/* Logout specific */
+.logout {
+    color: var(--system-red);
+}
+
+    .logout:hover {
+        opacity: 0.9;
+    }
+
+/* =========================================================
+   Blazor essentials (NON toccare)
+   ========================================================= */
+
+#blazor-error-ui {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    padding: 0.6rem 1.25rem;
+    background: lightyellow;
+    color: black;
+    z-index: 1000;
+}
+
+    #blazor-error-ui .dismiss {
+        position: absolute;
+        right: 0.75rem;
+        top: 0.5rem;
+        cursor: pointer;
+    }
+
+/* =========================================================
+   Apple-style focus handling
+   ========================================================= */
+
+/* 1. Nasconde il focus quando NON è da tastiera */
+:focus:not(:focus-visible) {
+    outline: none;
+}
+
+/* 2. Focus visibile SOLO da tastiera (stile Apple) */
+:focus-visible {
+    outline: 2px solid rgba(0, 122, 255, 0.45); /* Apple system blue soft */
+    outline-offset: 2px;
+    border-radius: 6px;
+}
+
+/* 3. Evita focus su elementi di solo testo */
+h1:focus,
+h2:focus,
+h3:focus,
+p:focus {
+    outline: none;
+}
