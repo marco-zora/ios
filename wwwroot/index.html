@@ -47,24 +47,7 @@
     <!-- <script src="_framework/blazor.webassembly.js"></script> -->
     <script src="_framework/blazor.webassembly#[.{fingerprint}].js"></script>
 
-    <!---->
+    
 
-        <script>
-            // Register Service Worker SOLO fuori da localhost
-            if ('serviceWorker' in navigator &&
-                !location.hostname.includes('localhost') &&
-                !location.hostname.includes('127.0.0.1')) {
-
-                navigator.serviceWorker.register('service-worker.js', { updateViaCache: 'none' })
-                    .then(registration => {
-                        console.log('Service Worker registered with scope:', registration.scope);
-                    })
-                    .catch(error => {
-                        console.error('Service Worker registration failed:', error);
-                    });
-            }
-        </script>
-
-    <!---->
 </body>
 </html>

@@ -9,23 +9,15 @@
     <!-- Add a fingerprint to filenames !!! -->
     <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
     
-    <ServiceWorkerAssetsManifest>service-worker-assets.js</ServiceWorkerAssetsManifest>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Content Remove="Pages\Counter.razor" />
-    <Content Remove="Shared\VersionChecker.razor" />
-  </ItemGroup>
-
- 
+  
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="10.0.2" />
     <PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="10.0.2" PrivateAssets="all" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ServiceWorker Include="wwwroot\service-worker.js" PublishedContent="wwwroot\service-worker.published.js" />
-  </ItemGroup>
+ 
 
   <ItemGroup>
     <Folder Include="Shared\" />
