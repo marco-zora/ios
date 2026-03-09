@@ -7,7 +7,7 @@
 
     <!-- This property is required to enable the Blazor WebAssembly AOT compiler, which is required for iOS support. -->
     <!-- Add a fingerprint to filenames !!! -->
-    <OverrideHtmlAssetPlaceholders>true</OverrideHtmlAssetPlaceholders>
+    <OverrideHtmlAssetPlaceholders>false</OverrideHtmlAssetPlaceholders>
     
   </PropertyGroup>
 
