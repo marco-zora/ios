@@ -5,8 +5,7 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>enable</ImplicitUsings>
 
-    <!-- This property is required to enable the Blazor WebAssembly AOT compiler, which is required for iOS support. -->
-    <!-- Add a fingerprint to filenames !!! -->
+    <!-- Add a fingerprint to filenames !!! NON USARE SE NON SI HA UNA IDEA CHIARA DELLE COSE!!! -->
     <OverrideHtmlAssetPlaceholders>false</OverrideHtmlAssetPlaceholders>
     
   </PropertyGroup>
