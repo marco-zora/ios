@@ -44,9 +44,17 @@ jobs:
           set -euo pipefail
           idx="${{ env.PUBLISH_DIR }}/index.html"
           # sostituisce solo i casi <base href="/"> e <base href="./">
-          sed -i 's|<base href="/"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
-          sed -i 's|<base href="./"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
+          #sed -i 's|<base href="/"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
+          #sed -i 's|<base href="./"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
           # 404.html prende la stessa base dell'index
+          #cp "$idx" "${{ env.PUBLISH_DIR }}/404.html"
+
+
+
+          # Sovrascrive QUALUNQUE base href esistente
+          sed -i -E 's|<base href="[^"]*"|<base href="/'${{ env.REPO_SUBDIR }}'/"|g' "$idx"
+
+          # 404.html per GitHub Pages
           cp "$idx" "${{ env.PUBLISH_DIR }}/404.html"
 
       # Necessario per servire la cartella _framework su GitHub Pages
@@ -63,6 +71,18 @@ jobs:
           ls -la "${{ env.PUBLISH_DIR }}" | sed -n '1,200p'
           echo "== base href in index.html =="
           grep -o '<base href="[^"]*"' "${{ env.PUBLISH_DIR }}/index.html" || true
+      
+      # Disabilita PWA
+      - name: TEMP disable PWA (remove SW + manifest)
+        shell: bash
+        run: |
+          rm -f "${{ env.PUBLISH_DIR }}/service-worker.js" \
+                "${{ env.PUBLISH_DIR }}/service-worker.published.js" \
+                "${{ env.PUBLISH_DIR }}/service-worker-assets.js" \
+                "${{ env.PUBLISH_DIR }}/manifest.webmanifest" || true
+
+          # rimuove eventuale registrazione nel HTML (se presente)
+          sed -i -E '/serviceWorker\.register/d' "${{ env.PUBLISH_DIR }}/index.html" || true
 
       # Deploy pulito su gh-pages (nessun residuo di versioni precedenti)
       - name: Deploy to gh-pages
