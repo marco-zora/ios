@@ -2,7 +2,23 @@
 @inject BlazorApp_IOS.Shared.GlobalService Global
 @implements IDisposable
 
-<div class="nav-menu px-3 py-2">
+
+
+
+
+
+<!-- <div class="nav-menu px-3 py-2"> -->
+
+    <div class="nav-sidebar">
+
+    <div class="sidebar-logo">
+        <img src="images/logo.png" alt="Logo" />
+    </div>
+    
+<nav class="sidebar-nav">
+        <ul class="nav flex-column">
+
+   
     @if (!IsLoggedIn)
     {
         <div class="nav-item px-3">
@@ -37,33 +53,6 @@
             </div>
         }
 
-
-        /*
-        <div class="nav-item px-3">
-            <a class="nav-link"
-               href="#"
-               @onclick="Logout"
-               @onclick:preventDefault="true"
-               @onclick:stopPropagation="true">
-                <span class="bi bi-box-arrow-right nav-icon" ></span>
-                Logout
-            </a>
-        </div>
-        
-        <div class="nav-item px-3">
-            <a class="nav-link"
-               href="#"
-               @onclick="Logout"
-               @onclick:preventDefault="true"
-               @onclick:stopPropagation="true">
-                <svg class="nav-icon" viewBox="0 0 16 16" aria-hidden="true">
-                    <path d="M6.146 11.854a.5.5 0 0 1 0-.708L8.293 9H1.5a.5.5 0 0 1 0-1h6.793L6.146 5.854a.5.5 0 1 1 .708-.708l3 3a.5.5 0 0 1 0 .708l-3 3a.5.5 0 0 1-.708 0z"/>
-                    <path d="M13.5 1a.5.5 0 0 1 .5.5v13a.5.5 0 0 1-.5.5H10a.5.5 0 0 1 0-1h3V2h-3a.5.5 0 0 1 0-1h3.5z"/>
-                </svg>
-                <span>Logout</span>
-            </a>
-        </div>
-        */
          <div class="nav-item px-3">
             <a class="nav-link logout"
                href="#"
@@ -85,11 +74,22 @@
                     <path d="M10 17l5-5-5-5" />
                     <path d="M15 12H3" />
                 </svg>
-            <span>Login</span>
+            <span>Logout</span>
             </a>
         </div>
 
     }
+
+
+    <div class="nav-item px-3">
+        <NavLink class="nav-link" href="home">
+            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Home
+        </NavLink>
+    </div>
+        </ul>
+    </nav>
+
+
 </div>
 
 @code {
@@ -123,7 +123,7 @@
     private async Task Logout()
     {
         await Global.Logout();
-        Nav.NavigateTo("\\", forceLoad: true);  // ritorna alla pagina Home
+        Nav.NavigateTo("login", forceLoad: true);  // ritorna alla pagina Home
     }
 
     public void Dispose()

@@ -20,7 +20,15 @@
         break;
 
     case StatusEnum.REINSERT:
-        <div class="alert alert-danger">@Error</div>       
+        <div class="alert alert-danger">@Error</div>      
+        
+        <h3>Accesso</h3>
+
+        <div class="card p-3 mb-3" style="max-width: 350px;">
+            <input class="form-control mb-2" placeholder="Username" @bind="LoginUser" />
+            <input class="form-control mb-3" type="password" placeholder="Password" @bind="LoginPass" />
+            <button class="btn btn-primary w-100" @onclick="VerifyLogin">Entra</button>
+        </div>
         break;
 
     case StatusEnum.ADMIN:
