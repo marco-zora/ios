@@ -211,25 +211,33 @@
 }
     private async Task OpenImpianti(string username)
         {
-            Nav.NavigateTo($"/impianti/{username}");
+    Nav.NavigateTo($"/impianti/{username}");
         }
 
     private async Task SaveUsers()
     {
-        try
-        {
-            Error = null;
-            Users ??= new();
 
-            var json = System.Text.Json.JsonSerializer.Serialize(
-                Users,
-                new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
-            );
 
-            using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
-            var res = await Http.PutAsync(Global.ProxyBase + Global.UsersFileName, content);
+    Global.SaveUsers();
+    return;
 
-            if (!res.IsSuccessStatusCode) Error = $"Errore salvataggio: {res.StatusCode}";
+    try
+    {
+        Error = null;
+        Users ??= new();
+
+        var json = System.Text.Json.JsonSerializer.Serialize(
+            Users,
+            new System.Text.Json.JsonSerializerOptions { WriteIndented = true }
+        );
+
+        using var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json");
+
+        var res = await Http.PutAsync(Global.ProxyBase + Global.UsersFileName, content);
+
+        if (!res.IsSuccessStatusCode) Error = $"Errore salvataggio: {res.StatusCode}";
+
+       
             //else  await JS.InvokeVoidAsync("alert", "Utenti salvati con successo!");
         }
         catch (Exception ex)

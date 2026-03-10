@@ -1,0 +1,117 @@
+﻿@page "/impianti/{user}"
+@page "/impianti"
+
+@inject HttpClient Http
+@inject IJSRuntime JS
+@inject NavigationManager Nav
+
+
+<h3 class="mt-3 mb-4">Gestione Impianti: @DisplayName</h3>
+
+@if(!Loaded) return;
+
+
+
+<div class="mb-3">
+    <label class="form-label fw-bold">Utente</label>
+
+    <select class="form-select w-auto d-inline-block"
+            
+            value="@user"
+            @onchange="OnUserChanged">
+
+
+        @foreach (var u in Users)
+        {
+            var count = (Global.Impianti != null
+            && Global.Impianti.TryGetValue(u.user, out var impianti))
+            ? impianti?.Count ?? 0
+            : 0;
+
+            <option value="@u.user">@u.name - (@count)</option>
+        }
+    </select>
+</div>
+
+@if(ImpiantiCliente != null)
+{
+    <!-- Griglia a wrap con cards a larghezza fissa -->
+    <div class="impianti-grid">
+        @foreach (var imp in ImpiantiCliente)
+        {
+            <div class="impianto-cell">
+                <ImpiantoCard Impianto="imp"
+                              ShowButtonLabels="true"
+                              OnDettaglio="() => ApriDettaglio(user, imp)"
+                              OnRinomina="() => RenameImpianto(user, imp)"
+                              OnElimina="() => DeleteImpianto(user, imp)" />
+            </div>
+        }
+    </div>
+}
+@code {
+    
+}
+@code {
+    
+    [Parameter] public string user { get; set; } = "";
+
+    private string? DisplayName;
+    UserRecord? record;
+    private Installation? Impianto;
+    List<UserRecord>? Users;
+    List<Impianto>? ImpiantiCliente = null;
+
+    private bool Loaded = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Trova l’utente in base all'username - user name è sicuramente presente perchè passato come parametro
+
+        Users = await Global.GetUsers();
+        await Global.GetInstallations();
+
+    }
+    protected override async Task OnParametersSetAsync()
+    {
+        Loaded = false;
+
+
+        if (string.IsNullOrEmpty(user))
+        {
+            // scegli un default (utente loggato)
+            user = await Global.LoggedUser();
+            Nav.NavigateTo($"/impianti/{user}", replace: true);
+            return;
+        }
+
+
+        record = Users?.FirstOrDefault(x => x.user == user);
+
+        DisplayName = record == null
+            ? "?"
+            : $"{record.name} ({user})";
+
+        ImpiantiCliente = Global.Impianti?.TryGetValue(user, out var impianti) == true
+            ? impianti
+            : null;
+
+        if (ImpiantiCliente == null)
+            DisplayName += " - Nessun Impianto";
+
+        Loaded = true;
+        //return Task.CompletedTask;
+    }
+
+    private void OnUserChanged(ChangeEventArgs e)
+    {
+       // Nav.NavigateTo($"/impianti/{e.Value}", forceLoad: true);
+        Nav.NavigateTo($"/impianti/{e.Value}");
+    }
+
+    protected async Task ApriDettaglio(string user, Impianto imp){}
+    protected async Task RenameImpianto(string user, Impianto imp) { }
+    protected async Task DeleteImpianto(string user, Impianto imp) { }
+
+}
+

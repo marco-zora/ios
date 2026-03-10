@@ -155,3 +155,26 @@ h3:focus,
 p:focus {
     outline: none;
 }
+
+
+/* Contenitore: riga fluida che va a capo */
+.impianti-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem; /* spazio fra cards */
+    align-items: stretch; /* le cards possono avere altezze diverse, ma allineate in alto */
+}
+
+    /* Cella contenitore della card: larghezza fissa, nessuna crescita/contrazione */
+    .impianti-grid .impianto-cell {
+        flex: 0 0 auto; /* non flettere */
+        width: 320px; /* <<< LARGHEZZA FISSA della card (puoi portarla a 340/360 se vuoi) */
+    }
+
+/* Card: altezza minima per armonia visiva e bordo morbido */
+.impianto-card { /* questa classe la usiamo già nel componente ImpiantoCard */
+    width: 100%; /* la card occupa tutta la cella da 320px */
+    min-height: 160px; /* opzionale: imposta una base estetica */
+    border-radius: 16px;
+}
+

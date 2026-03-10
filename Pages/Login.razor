@@ -33,6 +33,7 @@
 
     case StatusEnum.ADMIN:
         <h2>Benvenuto Amministratore @loggedUser</h2>
+
         break;
  
     case StatusEnum.USER:
@@ -119,7 +120,7 @@
         loggedRole = match.role;
         loggedUser = match.user;
 
-        if (match.role == "admin") Status = StatusEnum.ADMIN;
+        if (match.role == "admin") { Nav.NavigateTo("/admin"); Status = StatusEnum.ADMIN; }
         else Status = StatusEnum.USER;
     }
 

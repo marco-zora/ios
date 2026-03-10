@@ -1,0 +1,79 @@
+﻿
+
+<div class="card h-100 border-0 shadow-sm impianto-card"
+     style="
+        background-color:@(Impianto.colore ?? "#e3f2fd") !important;
+        transition: transform .2s ease;
+        border-radius: 16px;"
+     onmouseover="this.style.transform='scale(1.03)'"
+     onmouseout="this.style.transform='scale(1)'">
+
+    <div class="card-body">
+        <h5 class="fw-bold mb-1">@Impianto.nome</h5>
+
+        @if (!string.IsNullOrWhiteSpace(Impianto.indirizzo))
+        {
+            <div class="text-muted mb-2">
+                <i class="bi bi-geo-alt"></i> @Impianto.indirizzo
+            </div>
+        }
+
+        <span class="badge bg-dark">@Impianto.monitors.Count monitor@(Impianto.monitors.Count == 1 ? "" : "s")</span>
+    </div>
+
+    <div class="card-footer bg-transparent d-flex justify-content-between align-items-center">
+
+        <!-- Dettaglio: outline + micro-pannello chiaro sotto -->
+        <button class="btn btn-sm btn-outline-primary bg-white bg-opacity-85 px-3 shadow-0"
+                title="Apri dettaglio impianto"
+                @onclick="DettaglioClicked">
+            <i class="bi bi-search me-1"></i>
+            @if (ShowButtonLabels)
+            {
+                <span>Dettaglio</span>
+            }
+        </button>
+
+        <div class="d-flex align-items-center gap-2">
+
+            <!-- Rinomina -->
+            <button class="btn btn-sm btn-outline-primary bg-white bg-opacity-85 px-2 shadow-0"
+                    title="Rinomina impianto"
+                    @onclick="RinominaClicked">
+                <i class="bi bi-pencil me-1"></i>
+                @if (ShowButtonLabels)
+                {
+                    <span>Rinomina</span>
+                }
+            </button>
+
+            <!-- Elimina -->
+            <button class="btn btn-sm btn-outline-danger bg-white bg-opacity-85 px-2 shadow-0"
+                    title="Elimina impianto"
+                    @onclick="EliminaClicked">
+                <i class="bi bi-trash me-1"></i>
+                @if (ShowButtonLabels)
+                {
+                    <span>Elimina</span>
+                }
+            </button>
+        </div>
+
+    </div>
+</div>
+
+@code {
+    [Parameter] public Impianto Impianto { get; set; } = default!;
+    [Parameter] public EventCallback OnDettaglio { get; set; }
+    [Parameter] public EventCallback OnRinomina { get; set; }
+    [Parameter] public EventCallback OnElimina { get; set; }
+
+    /// <summary>
+    /// Mostra le etichette testuali accanto alle icone (true = etichetta + icona; false = solo icona).
+    /// </summary>
+    [Parameter] public bool ShowButtonLabels { get; set; } = true;
+
+    private Task DettaglioClicked() => OnDettaglio.InvokeAsync();
+    private Task RinominaClicked() => OnRinomina.InvokeAsync();
+    private Task EliminaClicked() => OnElimina.InvokeAsync();
+}

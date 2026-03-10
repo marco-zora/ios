@@ -2,94 +2,95 @@
 @inject BlazorApp_IOS.Shared.GlobalService Global
 @implements IDisposable
 
-
-
-
-
-
-<!-- <div class="nav-menu px-3 py-2"> -->
-
-    <div class="nav-sidebar">
+<div class="nav-sidebar">
 
     <div class="sidebar-logo">
-        <img src="images/logo.png" alt="Logo" />
+        <img src="images/HIDES-LOGO-2022_bianco-oriz.svg" alt="Logo" />
     </div>
-    
-<nav class="sidebar-nav">
+
+    <nav class="sidebar-nav">
         <ul class="nav flex-column">
 
-   
-    @if (!IsLoggedIn)
-    {
-        <div class="nav-item px-3">
-            <NavLink class="nav-link" href="login">
-                <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Login
-            </NavLink>
-        </div>
-    }
-    else
-    {
-        <div class="text-muted mb-2">
-            Utente: @LoggedUser
-            @if (IsAdmin)
+            @if (!IsLoggedIn)
             {
-                <span>(admin)</span>
+                <li class="nav-item">
+                    <NavLink class="nav-link" href="login">
+                        <span class="nav-icon">
+                            <span class="bi bi-box-arrow-in-right"></span>
+                        </span>
+                        <span class="nav-label">Login</span>
+                    </NavLink>
+                </li>
             }
-        </div>
+            else
+            {
+                <li class="sidebar-user">
+                    <div class="user-name">@LoggedUser</div>
+                    @if (IsAdmin)
+                    {
+                        <div class="user-role">Admin</div>
+                    }
+                </li>
 
-        @if (IsAdmin)
-        {
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="clienti">Clienti</NavLink>
-            </div>
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="impianti">Impianti</NavLink>
-            </div>
-        }
-        else
-        {
-            <div class="nav-item px-3">
-                <NavLink class="nav-link" href="impianti">I miei impianti</NavLink>
-            </div>
-        }
+                @if (IsAdmin)
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="admin">
+                            <span class="nav-icon">
+                                <span class="bi bi-people"></span>
+                            </span>
+                            <span class="nav-label">Clienti</span>
+                        </NavLink>
+                    </li>
 
-         <div class="nav-item px-3">
-            <a class="nav-link logout"
-               href="#"
-               @onclick="Logout"
-               @onclick:preventDefault="true"
-               @onclick:stopPropagation="true">
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="impianti">
+                            <span class="nav-icon">
+                                <span class="bi bi-diagram-3"></span>
+                            </span>
+                            <span class="nav-label">Impianti</span>
+                        </NavLink>
+                    </li>
+                }
+                else
+                {
+                    <li class="nav-item">
+                        <NavLink class="nav-link" href="impianti">
+                            <span class="nav-icon">
+                                <span class="bi bi-diagram-3"></span>
+                            </span>
+                            <span class="nav-label">I miei Impianti</span>
+                        </NavLink>
+                    </li>
+                }
 
-                  <svg class="logout-icon"
-                     width="20"
-                     height="20"
-                     viewBox="0 0 24 24"
-                     fill="none"
-                     stroke="currentColor"
-                     stroke-width="1.5"
-                     stroke-linecap="round"
-                     stroke-linejoin="round"
-                     style="flex-shrink:0">
-                    <path d="M15 3h2a4 4 0 0 1 4 4v10a4 4 0 0 1-4 4h-2" />
-                    <path d="M10 17l5-5-5-5" />
-                    <path d="M15 12H3" />
-                </svg>
-            <span>Logout</span>
-            </a>
-        </div>
+                <li class="nav-item logout-item">
+                    <a class="nav-link logout"
+                       href="#"
+                       @onclick="Logout"
+                       @onclick:preventDefault="true"
+                       @onclick:stopPropagation="true">
 
-    }
+                        <span class="nav-icon">
+                            <span class="bi bi-box-arrow-right"></span>
+                        </span>
 
+                        <span class="nav-label">Logout</span>
+                    </a>
+                </li>
+            }
 
-    <div class="nav-item px-3">
-        <NavLink class="nav-link" href="home">
-            <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Home
-        </NavLink>
-    </div>
+            <li class="nav-item">
+                <NavLink class="nav-link" href="home">
+                    <span class="nav-icon">
+                        <span class="bi bi-house"></span>
+                    </span>
+                    <span class="nav-label">Home</span>
+                </NavLink>
+            </li>
+
         </ul>
     </nav>
-
-
 </div>
 
 @code {
@@ -102,8 +103,6 @@
     protected override async Task OnInitializedAsync()
     {
         Global.AuthChanged += OnAuthChanged;
-
-        // stato iniziale (se l'utente era già loggato)
         await RefreshAuthStateAsync();
     }
 
@@ -115,7 +114,6 @@
 
     private async void OnAuthChanged()
     {
-        // IMPORTANTISSIMO: rileggere prima user/role, poi ridisegnare
         await RefreshAuthStateAsync();
         await InvokeAsync(StateHasChanged);
     }
@@ -123,7 +121,7 @@
     private async Task Logout()
     {
         await Global.Logout();
-        Nav.NavigateTo("login", forceLoad: true);  // ritorna alla pagina Home
+        Nav.NavigateTo("login");
     }
 
     public void Dispose()
