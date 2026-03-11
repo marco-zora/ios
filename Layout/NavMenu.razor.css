@@ -3,7 +3,6 @@
    ========================================================= */
 
 /* ----- Sidebar container ----- */
-
 .nav-sidebar {
     display: flex;
     flex-direction: column;
@@ -11,16 +10,10 @@
     width: 260px;
     background: linear-gradient(180deg, #0b1f4b 0%, #0f172a 100%);
     color: #e5e7eb;
+    overflow: hidden; /* evita scroll strani quando nav interna scorre */
 }
 
 /* ----- Logo ----- */
-/*
-.sidebar-logo {
-    padding: 1.25rem 1rem;
-    text-align: center;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-*/
 .sidebar-logo {
     display: flex;
     align-items: center; /* ✅ ALLINEAMENTO VERTICALE */
@@ -28,6 +21,7 @@
     padding: 1.25rem 1rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
+
     .sidebar-logo .bi,
     .sidebar-logo svg {
         width: 22px;
@@ -44,10 +38,10 @@
     }
 
 /* ----- Navigation container ----- */
-
 .sidebar-nav {
     margin-top: 1.5rem;
     flex: 1;
+    overflow-y: auto; /* desktop: lista scorrevole se serve */
 }
 
     .sidebar-nav ul {
@@ -57,7 +51,6 @@
     }
 
 /* ----- User info ----- */
-
 .sidebar-user {
     padding: 0.75rem 1rem;
     margin-bottom: 0.5rem;
@@ -160,3 +153,39 @@
         background: rgba(248, 113, 113, 0.15);
         color: #fecaca;
     }
+
+/* =========================================================
+   ✅ MOBILE: sidebar diventa top-bar (NON full screen)
+   ========================================================= */
+@media (max-width: 640.98px) {
+
+    .nav-sidebar {
+        width: 100%;
+        height: auto; /* ✅ niente 100vh */
+        flex-direction: column;
+        overflow: visible; /* ✅ evita "pannello chiuso" */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .sidebar-logo {
+        padding: 0.9rem 1rem; /* un po' più compatto */
+    }
+
+    .sidebar-nav {
+        margin-top: 0.75rem;
+        overflow-y: visible; /* ✅ lista naturale */
+        max-height: none;
+    }
+
+    .nav-label {
+        white-space: normal; /* se vuoi, su mobile può andare a capo */
+    }
+
+    /* se il tuo NavMenu usa wrapper tipo <nav> o .nav-scrollable, li neutralizziamo */
+    nav,
+    .nav-scrollable {
+        height: auto !important;
+        position: relative !important;
+        overflow: visible !important;
+    }
+}
