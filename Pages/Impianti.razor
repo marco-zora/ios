@@ -81,7 +81,7 @@
         {
             // scegli un default (utente loggato)
             user = await Global.LoggedUser();
-            Nav.NavigateTo($"/impianti/{user}", replace: true);
+            Nav.NavigateTo($"impianti/{user}", replace: true);
             return;
         }
 
@@ -105,8 +105,8 @@
 
     private void OnUserChanged(ChangeEventArgs e)
     {
-       // Nav.NavigateTo($"/impianti/{e.Value}", forceLoad: true);
-        Nav.NavigateTo($"/impianti/{e.Value}");
+       // Nav.NavigateTo($"impianti/{e.Value}", forceLoad: true);
+        Nav.NavigateTo($"impianti/{e.Value}");
     }
 
     protected async Task ApriDettaglio(string user, Impianto imp){}

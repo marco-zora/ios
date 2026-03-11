@@ -120,7 +120,7 @@
         loggedRole = match.role;
         loggedUser = match.user;
 
-        if (match.role == "admin") { Nav.NavigateTo("/admin"); Status = StatusEnum.ADMIN; }
+        if (match.role == "admin") { Nav.NavigateTo("admin"); Status = StatusEnum.ADMIN; }
         else Status = StatusEnum.USER;
     }
 
