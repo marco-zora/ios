@@ -1,99 +1,257 @@
-.page {
-    position: relative;
+/* =========================================================
+   NavMenu – Professionale (Desktop sidebar + Mobile portrait drawer)
+   ========================================================= */
+
+:root {
+    --nav-bg: linear-gradient(180deg, #0b1f4b 0%, #0f172a 100%);
+    --nav-fg: #e5e7eb;
+    --nav-muted: #9ca3af;
+    --nav-active: rgba(59, 130, 246, 0.22);
+    --nav-hover: rgba(255, 255, 255, 0.06);
+    --nav-width: 260px;
+    --header-h: 56px;
+}
+
+/* Container (desktop/landscape: sidebar) */
+.nav-sidebar {
     display: flex;
     flex-direction: column;
+    width: var(--nav-width);
+    height: 100vh;
+    background: var(--nav-bg);
+    color: var(--nav-fg);
+    overflow: hidden;
 }
 
-main {
-    flex: 1;
-}
-
-.sidebar {
-    background-image: linear-gradient( 180deg, rgb(5, 39, 103) 0%, #3a0647 70% );
-}
-
-.top-row {
-    background-color: #f7f7f7;
-    border-bottom: 1px solid #d6d5d5;
-    justify-content: flex-end;
-    height: 3.5rem;
+/* Header (logo + toggle) */
+.nav-header {
     display: flex;
     align-items: center;
+    justify-content: space-between;
+    height: var(--header-h);
+    padding: 0.75rem 0.75rem;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
-    .top-row ::deep a,
-    .top-row ::deep .btn-link {
-        white-space: nowrap;
-        margin-left: 1.5rem;
+.sidebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    cursor: pointer;
+}
+
+    .sidebar-logo img {
+        height: 26px;
+        width: auto;
+        display: block;
+    }
+
+/* Toggle button (hidden by default; visible in mobile portrait) */
+.menu-toggle {
+    display: none;
+    appearance: none;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.08);
+    color: var(--nav-fg);
+    border-radius: 10px;
+    width: 44px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+    .menu-toggle .bi {
+        font-size: 22px;
+        line-height: 1;
+    }
+
+/* Backdrop (mobile portrait only; shown when open) */
+.nav-backdrop {
+    display: none;
+}
+
+/* Nav panel (desktop: always visible list) */
+.nav-panel {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* List */
+.nav-list {
+    list-style: none;
+    margin: 0;
+    padding: 0.75rem 0.5rem;
+}
+
+/* User card */
+.sidebar-user {
+    padding: 0.6rem 0.75rem;
+    margin: 0.25rem 0.25rem 0.75rem 0.25rem;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.06);
+}
+
+    .sidebar-user .user-name {
+        font-weight: 600;
+        color: var(--nav-fg);
+    }
+
+    .sidebar-user .user-role {
+        font-size: 0.78rem;
+        color: var(--nav-muted);
+        margin-top: 2px;
+    }
+
+/* Items */
+.nav-item {
+    margin: 0.15rem 0;
+}
+
+    /* IMPORTANT: NavLink renderizza <a> in un altro componente -> serve ::deep */
+    .nav-item ::deep .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 0.65rem 0.85rem;
+        border-radius: 12px;
+        color: #d1d5db;
         text-decoration: none;
+        transition: background 0.15s ease, color 0.15s ease;
+        width: 100%;
+        background: transparent;
+        border: none;
+        cursor: pointer;
     }
 
-        .top-row ::deep a:hover,
-        .top-row ::deep .btn-link:hover {
-            text-decoration: underline;
+        .nav-item ::deep .nav-link:hover {
+            background: var(--nav-hover);
+            color: #ffffff;
         }
 
-        .top-row ::deep a:first-child {
-            overflow: hidden;
-            text-overflow: ellipsis;
+        .nav-item ::deep .nav-link.active {
+            background: var(--nav-active);
+            color: #ffffff;
         }
 
-/* ========================= */
-/* ✅ MOBILE FIX (IMPORTANTE) */
-/* ========================= */
-@media (max-width: 640.98px) {
+/* Icons */
+.nav-icon {
+    width: 24px;
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0.95;
+}
 
-    .page {
-        flex-direction: column;
+    .nav-icon .bi {
+        font-size: 18px;
+        line-height: 1;
     }
 
-    .sidebar {
+/* Labels */
+.nav-label {
+    font-size: 0.95rem;
+    font-weight: 550;
+    white-space: nowrap;
+}
+
+/* Logout */
+.logout-item {
+    margin-top: auto;
+    padding-top: 0.25rem;
+}
+
+.logout {
+    color: #fca5a5;
+}
+
+    .logout:hover {
+        background: rgba(248, 113, 113, 0.16) !important;
+        color: #fecaca !important;
+    }
+
+/* =========================================================
+   ✅ MOBILE PORTRAIT: topbar + hamburger + drawer
+   ========================================================= */
+@media (max-width: 640.98px) and (orientation: portrait) {
+
+    /* Sidebar becomes a top app bar container */
+    .nav-sidebar {
         width: 100%;
         height: auto;
-        position: relative;
+        overflow: visible;
+        position: sticky;
+        top: 0;
+        z-index: 1000;
+        /* iOS safe-area */
+        padding-top: env(safe-area-inset-top);
     }
 
-    .top-row {
-        justify-content: space-between;
+    .nav-header {
+        height: var(--header-h);
+        padding: 0.65rem 0.75rem;
     }
 
-        .top-row ::deep a,
-        .top-row ::deep .btn-link {
-            margin-left: 0;
+    .menu-toggle {
+        display: inline-flex;
+    }
+
+    /* Backdrop appears only when menu open */
+    .nav-backdrop {
+        display: block;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,0.38);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.18s ease;
+        z-index: 999; /* below panel, above page */
+    }
+
+        .nav-backdrop.show {
+            opacity: 1;
+            pointer-events: auto;
         }
+
+    /* Drawer panel */
+    .nav-panel {
+        position: fixed;
+        left: 0;
+        right: 0;
+        top: calc(var(--header-h) + env(safe-area-inset-top));
+        bottom: 0;
+        background: var(--nav-bg);
+        overflow-y: auto;
+        transform: translateY(-8px);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: transform 0.18s ease, opacity 0.18s ease, visibility 0.18s ease;
+        z-index: 1000;
+    }
+
+        .nav-panel.open {
+            transform: translateY(0);
+            opacity: 1;
+            visibility: visible;
+            pointer-events: auto;
+        }
+
+    .nav-list {
+        padding: 0.75rem 0.5rem calc(1rem + env(safe-area-inset-bottom));
+    }
+
+    /* In portrait, user card can stay (inside drawer). If you prefer it hidden, set display:none */
 }
 
-/* ========================= */
-/* ✅ DESKTOP / TABLET        */
-/* ========================= */
-@media (min-width: 641px) {
-
-    .page {
-        flex-direction: row;
-    }
-
-    .sidebar {
-        width: 250px;
-        height: 100vh;
-        position: sticky;
-        top: 0;
-    }
-
-    .top-row {
-        position: sticky;
-        top: 0;
-        z-index: 1;
-    }
-
-        .top-row.auth ::deep a:first-child {
-            flex: 1;
-            text-align: right;
-            width: 0;
-        }
-
-    .top-row,
-    article {
-        padding-left: 2rem !important;
-        padding-right: 1.5rem !important;
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .nav-panel,
+    .nav-backdrop,
+    .nav-item ::deep .nav-link {
+        transition: none !important;
     }
 }

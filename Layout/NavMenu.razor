@@ -3,21 +3,42 @@
 @implements IDisposable
 
 <div class="nav-sidebar">
+    <!-- Header: logo + hamburger (hamburger visibile solo su mobile portrait via CSS) -->
+    <div class="nav-header">
+        <div class="sidebar-logo" @onclick="CloseMenu" role="button" tabindex="0" aria-label="Vai alla Home">
+            <img src="images/HIDES-LOGO-2022_bianco-oriz.svg" alt="Logo" />
+        </div>
 
-    <div class="sidebar-logo">
-        <img src="images/HIDES-LOGO-2022_bianco-oriz.svg" alt="Logo" />
+        <button type="button"
+                class="menu-toggle"
+                aria-controls="mainNavPanel"
+                aria-expanded="@menuOpen"
+                aria-label="Apri/chiudi menu"
+                @onclick="ToggleMenu">
+            <span class="bi bi-list"></span>
+        </button>
     </div>
 
-    <nav class="sidebar-nav">
-        <ul class="nav flex-column">
+    <!-- Backdrop: appare solo quando menu è aperto (mobile portrait) -->
+    <div class="nav-backdrop @(menuOpen ? "show" : "")" @onclick="CloseMenu"></div>
+
+    <!-- Panel: sidebar su desktop, drawer su mobile portrait -->
+    <nav id="mainNavPanel" class="nav-panel @(menuOpen ? "open" : "")" aria-label="Navigazione principale">
+        <ul class="nav-list">
+
+            <!-- Home sempre disponibile -->
+            <li class="nav-item">
+                <NavLink class="nav-link" href="home" @onclick="CloseMenu">
+                    <span class="nav-icon"><span class="bi bi-house"></span></span>
+                    <span class="nav-label">Home</span>
+                </NavLink>
+            </li>
 
             @if (!IsLoggedIn)
             {
                 <li class="nav-item">
-                    <NavLink class="nav-link" href="login">
-                        <span class="nav-icon">
-                            <span class="bi bi-box-arrow-in-right"></span>
-                        </span>
+                    <NavLink class="nav-link" href="login" @onclick="CloseMenu">
+                        <span class="nav-icon"><span class="bi bi-box-arrow-in-right"></span></span>
                         <span class="nav-label">Login</span>
                     </NavLink>
                 </li>
@@ -35,19 +56,15 @@
                 @if (IsAdmin)
                 {
                     <li class="nav-item">
-                        <NavLink class="nav-link" href="admin">
-                            <span class="nav-icon">
-                                <span class="bi bi-people"></span>
-                            </span>
+                        <NavLink class="nav-link" href="admin" @onclick="CloseMenu">
+                            <span class="nav-icon"><span class="bi bi-people"></span></span>
                             <span class="nav-label">Clienti</span>
                         </NavLink>
                     </li>
 
                     <li class="nav-item">
-                        <NavLink class="nav-link" href="impianti">
-                            <span class="nav-icon">
-                                <span class="bi bi-diagram-3"></span>
-                            </span>
+                        <NavLink class="nav-link" href="impianti" @onclick="CloseMenu">
+                            <span class="nav-icon"><span class="bi bi-diagram-3"></span></span>
                             <span class="nav-label">Impianti</span>
                         </NavLink>
                     </li>
@@ -55,40 +72,20 @@
                 else
                 {
                     <li class="nav-item">
-                        <NavLink class="nav-link" href="impianti">
-                            <span class="nav-icon">
-                                <span class="bi bi-diagram-3"></span>
-                            </span>
+                        <NavLink class="nav-link" href="impianti" @onclick="CloseMenu">
+                            <span class="nav-icon"><span class="bi bi-diagram-3"></span></span>
                             <span class="nav-label">I miei Impianti</span>
                         </NavLink>
                     </li>
                 }
 
                 <li class="nav-item logout-item">
-                    <a class="nav-link logout"
-                       href="#"
-                       @onclick="Logout"
-                       @onclick:preventDefault="true"
-                       @onclick:stopPropagation="true">
-
-                        <span class="nav-icon">
-                            <span class="bi bi-box-arrow-right"></span>
-                        </span>
-
+                    <button type="button" class="nav-link logout" @onclick="Logout">
+                        <span class="nav-icon"><span class="bi bi-box-arrow-right"></span></span>
                         <span class="nav-label">Logout</span>
-                    </a>
+                    </button>
                 </li>
             }
-
-            <li class="nav-item">
-                <NavLink class="nav-link" href="home">
-                    <span class="nav-icon">
-                        <span class="bi bi-house"></span>
-                    </span>
-                    <span class="nav-label">Home</span>
-                </NavLink>
-            </li>
-
         </ul>
     </nav>
 </div>
@@ -96,6 +93,8 @@
 @code {
     private string? LoggedUser;
     private string? LoggedRole;
+
+    private bool menuOpen;
 
     private bool IsLoggedIn => !string.IsNullOrWhiteSpace(LoggedUser);
     private bool IsAdmin => string.Equals(LoggedRole, "admin", StringComparison.OrdinalIgnoreCase);
@@ -118,8 +117,12 @@
         await InvokeAsync(StateHasChanged);
     }
 
+    private void ToggleMenu() => menuOpen = !menuOpen;
+    private void CloseMenu() => menuOpen = false;
+
     private async Task Logout()
     {
+        CloseMenu();
         await Global.Logout();
         Nav.NavigateTo("login");
     }
