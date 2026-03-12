@@ -1,0 +1,237 @@
+/* /Layout/MainLayout.razor.rz.scp.css */
+/* =========================================================
+   MainLayout – Layout pagina
+   ========================================================= */
+
+.page[b-lvwks6u76v] {
+    position: relative;
+    display: flex;
+    flex-direction: column; /* mobile first */
+    min-height: 100vh;
+}
+
+/* contenitore sidebar */
+.sidebar[b-lvwks6u76v] {
+    background-image: linear-gradient( 180deg, rgb(5, 39, 103) 0%, #3a0647 70% );
+}
+
+/* contenuto principale */
+main[b-lvwks6u76v] {
+    flex: 1;
+    background: #ffffff;
+    min-width: 0;
+}
+
+/* =========================================================
+   DESKTOP / TABLET
+   ========================================================= */
+@media (min-width: 641px) {
+
+    .page[b-lvwks6u76v] {
+        flex-direction: row; /* ✅ sidebar a sinistra */
+    }
+
+    .sidebar[b-lvwks6u76v] {
+        width: 260px;
+        height: 100vh;
+        position: sticky;
+        top: 0;
+        flex-shrink: 0;
+    }
+
+    main[b-lvwks6u76v] {
+        flex: 1;
+    }
+}
+/* /Layout/NavMenu.razor.rz.scp.css */
+/* =========================================================
+   NavMenu – CSS Isolato (Sidebar moderna)
+   ========================================================= */
+
+/* ----- Sidebar container ----- */
+.nav-sidebar[b-5utsc3uwk6] {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    width: 260px;
+    background: linear-gradient(180deg, #0b1f4b 0%, #0f172a 100%);
+    color: #e5e7eb;
+    overflow: hidden; /* evita scroll strani quando nav interna scorre */
+}
+
+/* ----- Logo ----- */
+.sidebar-logo[b-5utsc3uwk6] {
+    display: flex;
+    align-items: center; /* ✅ ALLINEAMENTO VERTICALE */
+    gap: 0.75rem;
+    padding: 1.25rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+    .sidebar-logo .bi[b-5utsc3uwk6],
+    .sidebar-logo svg[b-5utsc3uwk6] {
+        width: 22px;
+        height: 22px;
+        display: block; /* ✅ elimina baseline */
+        line-height: 1;
+        flex-shrink: 0;
+    }
+
+    .sidebar-logo img[b-5utsc3uwk6] {
+        height: 26px;
+        width: auto;
+        display: block;
+    }
+
+/* ----- Navigation container ----- */
+.sidebar-nav[b-5utsc3uwk6] {
+    margin-top: 1.5rem;
+    flex: 1;
+    overflow-y: auto; /* desktop: lista scorrevole se serve */
+}
+
+    .sidebar-nav ul[b-5utsc3uwk6] {
+        list-style: none;
+        margin: 0;
+        padding: 0;
+    }
+
+/* ----- User info ----- */
+.sidebar-user[b-5utsc3uwk6] {
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    font-size: 0.85rem;
+    color: #9ca3af;
+}
+
+    .sidebar-user .user-name[b-5utsc3uwk6] {
+        color: #e5e7eb;
+        font-weight: 500;
+    }
+
+    .sidebar-user .user-role[b-5utsc3uwk6] {
+        font-size: 0.75rem;
+        opacity: 0.7;
+    }
+
+/* =========================================================
+   Nav items & links
+   ========================================================= */
+
+.nav-item[b-5utsc3uwk6] {
+    margin: 0.15rem 0;
+}
+
+    /* ::deep necessario per NavLink (CSS isolation) */
+    .nav-item[b-5utsc3uwk6]  .nav-link {
+        display: flex;
+        align-items: center; /* ✅ allineamento reale */
+        gap: 12px;
+        padding: 0.65rem 1rem;
+        color: #d1d5db;
+        text-decoration: none;
+        border-radius: 8px;
+        transition: background 0.15s ease, color 0.15s ease;
+    }
+
+        .nav-item[b-5utsc3uwk6]  .nav-link:hover {
+            background: rgba(255, 255, 255, 0.06);
+            color: #ffffff;
+        }
+
+        .nav-item[b-5utsc3uwk6]  .nav-link.active {
+            background: rgba(59, 130, 246, 0.18);
+            color: #ffffff;
+        }
+
+/* =========================================================
+   Icons (KEY FIX)
+   ========================================================= */
+
+.nav-icon[b-5utsc3uwk6] {
+    width: 24px; /* ✅ colonna fissa */
+    height: 24px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    opacity: 0.9;
+}
+
+    /* Bootstrap Icons */
+    .nav-icon .bi[b-5utsc3uwk6] {
+        font-size: 18px;
+        line-height: 1; /* ✅ elimina baseline */
+    }
+
+    /* SVG Icons (logout) */
+    .nav-icon svg[b-5utsc3uwk6] {
+        width: 18px;
+        height: 18px;
+        display: block;
+        stroke: currentColor;
+        fill: none;
+    }
+
+/* =========================================================
+   Labels
+   ========================================================= */
+
+.nav-label[b-5utsc3uwk6] {
+    font-size: 0.95rem;
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+/* =========================================================
+   Logout
+   ========================================================= */
+
+.logout-item[b-5utsc3uwk6] {
+    margin-top: auto;
+}
+
+.logout[b-5utsc3uwk6] {
+    color: #f87171;
+}
+
+    .logout:hover[b-5utsc3uwk6] {
+        background: rgba(248, 113, 113, 0.15);
+        color: #fecaca;
+    }
+
+/* =========================================================
+   ✅ MOBILE: sidebar diventa top-bar (NON full screen)
+   ========================================================= */
+@media (max-width: 640.98px) {
+
+    .nav-sidebar[b-5utsc3uwk6] {
+        width: 100%;
+        height: auto; /* ✅ niente 100vh */
+        flex-direction: column;
+        overflow: visible; /* ✅ evita "pannello chiuso" */
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .sidebar-logo[b-5utsc3uwk6] {
+        padding: 0.9rem 1rem; /* un po' più compatto */
+    }
+
+    .sidebar-nav[b-5utsc3uwk6] {
+        margin-top: 0.75rem;
+        overflow-y: visible; /* ✅ lista naturale */
+        max-height: none;
+    }
+
+    .nav-label[b-5utsc3uwk6] {
+        white-space: normal; /* se vuoi, su mobile può andare a capo */
+    }
+
+    /* se il tuo NavMenu usa wrapper tipo <nav> o .nav-scrollable, li neutralizziamo */
+    nav[b-5utsc3uwk6],
+    .nav-scrollable[b-5utsc3uwk6] {
+        height: auto !important;
+        position: relative !important;
+        overflow: visible !important;
+    }
+}
