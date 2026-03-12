@@ -73,43 +73,6 @@ main {
 
 
 /* =========================================================
-   Navigation / Sidebar
-   ========================================================= */
-
-.nav-link {
-    display: flex;
-    align-items: center;
-    gap: 0.6rem;
-    color: var(--label-primary);
-    text-decoration: none;
-}
-
-    .nav-link.secondary {
-        color: var(--label-secondary);
-    }
-
-/* =========================================================
-   SVG Icons (Apple‑like)
-   ========================================================= */
-
-.nav-icon,
-.logout-icon {
-    width: 20px;
-    height: 20px;
-    flex-shrink: 0;
-    color: currentColor;
-}
-
-/* Logout specific */
-.logout {
-    color: var(--system-red);
-}
-
-    .logout:hover {
-        opacity: 0.9;
-    }
-
-/* =========================================================
    Blazor essentials (NON toccare)
    ========================================================= */
 
