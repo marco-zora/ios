@@ -1,161 +1,44 @@
 /* =========================================================
-   NavMenu – Professionale
-   Desktop: sidebar
-   Mobile portrait: top-bar + hamburger + drawer
+   MainLayout – Layout pagina
    ========================================================= */
 
-.nav-sidebar {
+.page {
+    position: relative;
     display: flex;
-    flex-direction: column;
-    width: 260px;
-    height: 100vh;
-    background: linear-gradient(180deg, #0b1f4b 0%, #0f172a 100%);
-    color: #e5e7eb;
+    flex-direction: column; /* mobile first */
+    min-height: 100vh;
 }
 
-/* ================= HEADER ================= */
-
-.nav-header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    height: 56px;
-    padding: 0.75rem 1rem;
-    border-bottom: 1px solid rgba(255,255,255,0.08);
+/* contenitore sidebar */
+.sidebar {
+    background-image: linear-gradient( 180deg, rgb(5, 39, 103) 0%, #3a0647 70% );
 }
 
-.sidebar-logo img {
-    height: 26px;
-}
-
-/* hamburger (mobile only) */
-.menu-toggle {
-    display: none;
-    background: none;
-    border: none;
-    color: white;
-    font-size: 1.5rem;
-    cursor: pointer;
-}
-
-/* ================= DESKTOP ================= */
-
-.nav-panel {
+/* contenuto principale */
+main {
     flex: 1;
-    overflow-y: auto;
+    background: #ffffff;
+    min-width: 0;
 }
 
-.nav-list {
-    list-style: none;
-    margin: 0;
-    padding: 0.75rem;
-}
+/* =========================================================
+   DESKTOP / TABLET
+   ========================================================= */
+@media (min-width: 641px) {
 
-.nav-item {
-    margin: 0.15rem 0;
-}
-
-    .nav-item ::deep .nav-link,
-    .nav-item button.nav-link {
-        display: flex;
-        align-items: center;
-        gap: 12px;
-        padding: 0.65rem 0.85rem;
-        border-radius: 10px;
-        color: #d1d5db;
-        background: none;
-        border: none;
-        width: 100%;
-        text-align: left;
+    .page {
+        flex-direction: row; /* ✅ sidebar a sinistra */
     }
 
-        .nav-item ::deep .nav-link:hover,
-        .nav-item button.nav-link:hover {
-            background: rgba(255,255,255,0.08);
-            color: #ffffff;
-        }
-
-        .nav-item ::deep .nav-link.active {
-            background: rgba(59,130,246,0.22);
-            color: #ffffff;
-        }
-
-.nav-icon {
-    width: 24px;
-    height: 24px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-}
-
-.nav-label {
-    font-weight: 500;
-}
-
-/* user */
-.sidebar-user {
-    padding: 0.5rem 0.75rem;
-    margin-bottom: 0.75rem;
-    font-size: 0.85rem;
-    color: #9ca3af;
-}
-
-/* logout */
-.logout {
-    color: #f87171;
-}
-
-/* ================= MOBILE PORTRAIT ================= */
-
-@media (max-width: 640.98px) {
-
-    .nav-sidebar {
-        width: 100%;
-        height: auto;
+    .sidebar {
+        width: 260px;
+        height: 100vh;
         position: sticky;
         top: 0;
-        z-index: 1000;
+        flex-shrink: 0;
     }
 
-    .menu-toggle {
-        display: block;
-    }
-
-    /* backdrop */
-    .nav-backdrop {
-        position: fixed;
-        inset: 0;
-        background: rgba(0,0,0,0.4);
-        display: none;
-        z-index: 999;
-    }
-
-        .nav-backdrop.show {
-            display: block;
-        }
-
-    /* drawer */
-    .nav-panel {
-        position: fixed;
-        top: 56px;
-        left: 0;
-        right: 0;
-        bottom: 0;
-        background: linear-gradient(180deg, #0b1f4b 0%, #0f172a 100%);
-        transform: translateY(-100%);
-        transition: transform 0.2s ease;
-        z-index: 1000;
-    }
-
-        .nav-panel.open {
-            transform: translateY(0);
-        }
-}
-
-/* ================= DESKTOP: nasconde hamburger ================= */
-
-@media (min-width: 641px) {
-    .menu-toggle {
-        display: none !important;
+    main {
+        flex: 1;
     }
 }
